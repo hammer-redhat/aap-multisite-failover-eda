@@ -2,7 +2,7 @@
 - name: Monitor PostgreSQL Role
   hosts: all
   sources:
-    - name: AAP 2.5 Event Stream - Site 2
+    - name: AAP 2.5 Event Stream
       ansible.eda.webhook:
 
   rules:

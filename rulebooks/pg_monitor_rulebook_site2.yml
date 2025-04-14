@@ -1,21 +1,20 @@
+---
 - name: Monitor PostgreSQL Role
   hosts: all
   sources:
-    - ansible.eda.pg_listener:
-        dsn: "host={{ db_host }} port=5432 dbname={{ db_name }} user={{ db_user }} password={{ db_password }}"
-        channels:
-          - text
+    - name: AAP 2.5 Event Stream - Site 2
+      ansible.eda.webhook:
 
   rules:
-    - name: Scale up
-      condition: event.postgres_db_role == primary
+    - name: Scale up - Site 2
+      condition: event.payload.in_recovery == false
       action:
         run_job_template:
           name: "Scale up AAP Site 2 CR"
           organization: "Default"
 
-    - name: Scale down
-      condition: event.postgres_db_role != primary
+    - name: Scale down - Site 2
+      condition: event.payload.in_recovery == true
       action:
         run_job_template:
           name: "Scale down AAP Site 2 CR"

@@ -1,0 +1,9 @@
+- name: Bring up AAP Site 1.
+  hosts: localhost
+  gather_facts: false
+  tasks:
+    - name: Scale AAP CR replicas according to role. 
+      redhat.openshift.k8s:
+        state: present
+        src: ../files/aap-cr-up-site1.yml
+        validate_certs: false

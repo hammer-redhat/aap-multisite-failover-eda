@@ -1,0 +1,34 @@
+apiVersion: automationcontroller.ansible.com/v1beta1
+kind: AutomationController
+metadata:
+  name: controller-edb-01
+  namespace: aap-24
+spec:
+  postgres_keepalives_count: 5
+  postgres_keepalives_idle: 5
+  metrics_utility_cronjob_report_schedule: '@monthly'
+  create_preload_data: true
+  route_tls_termination_mechanism: Edge
+  garbage_collect_secrets: false
+  ingress_type: Route
+  loadbalancer_port: 80
+  admin_password_secret: controller-edb-01-admin-password
+  no_log: true
+  image_pull_policy: IfNotPresent
+  loadbalancer_ip: ''
+  projects_storage_size: 8Gi
+  auto_upgrade: true
+  task_privileged: false
+  postgres_keepalives: true
+  metrics_utility_enabled: false
+  postgres_keepalives_interval: 5
+  ipv6_disabled: false
+  projects_storage_access_mode: ReadWriteMany
+  metrics_utility_pvc_claim_size: 5Gi
+  set_self_labels: true
+  projects_persistence: false
+  replicas: 0
+  admin_user: admin
+  loadbalancer_protocol: http
+  secret_key_secret: controller-edb-01-secret-key
+  postgres_configuration_secret: external-postgres-configuration-edb-hammer

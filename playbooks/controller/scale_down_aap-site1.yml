@@ -5,5 +5,5 @@
     - name: Scale AAP CR replicas according to role. 
       redhat.openshift.k8s:
         state: present
-        src: ../files/aap-cr-down-site1.yml
+        src: ../../files/controller/aap-cr-down-site1.yml
         validate_certs: false

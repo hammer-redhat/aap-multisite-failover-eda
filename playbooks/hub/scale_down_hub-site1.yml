@@ -24,3 +24,27 @@
               replicas: 0
             worker: 
               replicas: 0
+    
+    - name: Ensure redis deployment is scaled down. 
+      redhat.openshift.k8s:
+        state: present
+        api_version: apps/v1
+        kind: Deployment
+        name: hub-aws-01-redis
+        namespace: aap-24
+        merge_type: merge 
+        definition:
+          spec:
+            replicas: 0
+
+    - name: Ensure hub worker deployment is scaled down. 
+      redhat.openshift.k8s:
+        state: present
+        api_version: apps/v1
+        kind: Deployment
+        name: hub-aws-01-worker
+        namespace: aap-24
+        merge_type: merge 
+        definition:
+          spec:
+            replicas: 0

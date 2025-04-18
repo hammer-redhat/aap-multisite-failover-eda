@@ -5,5 +5,11 @@
     - name: Scale AAP CR replicas according to role. 
       redhat.openshift.k8s:
         state: present
-        src: ../files/aap-cr-up-site1.yml
-        validate_certs: false
+        api_version: automationcontroller.ansible.com/v1beta1
+        kind: AutomationController
+        name: controller-edb-01
+        namespace: aap-24
+        merge_type: merge 
+        definition:
+          spec:
+            replicas: 1

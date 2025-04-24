@@ -49,17 +49,45 @@ High-Level Workflow for AAP Failover Automation using Event-Driven Ansible
 - Failover EDB: These playbooks were created to simplify triggering the database failover on the EnterpriseDB PostgreSQL cluster we deployed. It utilized the playbooks shipped with tpaexec and is located here - `/opt/EDB/TPA/architectures/M1/commands/switchover.yml`. You can ignore using these playbooks as they're used for demonstrating failover scenarios for this use case.
 -  Scale up/down AAP: These playbooks use the `redhat.openshift.k8s` module to apply changes to AAP Custom Resources in Openshift. The playbooks use the following files in this repo:  
     - Scaling up Automation Controller:   
-        - [Controller Site 1](https://github.com/hammer-redhat/aap-multisite-failover-eda/blob/main/playbooks/controller/scale_up_aap-site1.yml)
-        - [Controller Site 2](https://github.com/hammer-redhat/aap-multisite-failover-eda/blob/main/playbooks/controller/scale_up_aap-site2.yml)
+        - Configure a job_template in AAP using the following playbook: [scale-aap-controller.yml](https://github.com/hammer-redhat/aap-multisite-failover-eda/blob/main/playbooks/controller/scale-aap-controller.yml)
+        - Job Template Extra Vars:
+            ```
+            controller_cr_name: controller-site-1
+            controller_cr_namespace: aap-24-site-1
+            desired_replicas: 1
+            ```
     - Scaling up Automation Hub: 
-        - [Hub Site 1](https://github.com/hammer-redhat/aap-multisite-failover-eda/blob/main/playbooks/hub/scale_up_hub-site1.yml)
-        - [Hub Site 2](https://github.com/hammer-redhat/aap-multisite-failover-eda/blob/main/playbooks/hub/scale_up_hub-site2.yml)
+        - Configure a job_template in AAP using the following playbook: [scale-aap-hub.yml](https://github.com/hammer-redhat/aap-multisite-failover-eda/blob/main/playbooks/hub/scale-aap-hub.yml)
+        - Job Template Extra Vars: Note these are the default replicas, if you require higher replica counts, please adjust accordingly. 
+            ```
+            hub_cr_name: hub-aws-01
+            hub_cr_namespace: aap-24-site-1
+            web_desired_replicas: 1
+            content_desired_replicas: 2
+            api_desired_replicas: 1
+            redis_desired_replicas: 1
+            worker_desired_replicas: 2
+            ```
     - Scaling down Automation Controller:
-        - [Controller Site 1](https://github.com/hammer-redhat/aap-multisite-failover-eda/blob/main/playbooks/controller/scale_down_aap-site1.yml)
-        - [Controller Site 2](https://github.com/hammer-redhat/aap-multisite-failover-eda/blob/main/playbooks/controller/scale_down_aap-site2.yml)
+        - Configure a job_template in AAP using the following playbook: [scale-aap-controller.yml](https://github.com/hammer-redhat/aap-multisite-failover-eda/blob/main/playbooks/controller/scale-aap-controller.yml)
+        - Job Template Extra Vars:
+            ```
+            controller_cr_name: controller-site-1
+            controller_cr_namespace: aap-24-site-1
+            desired_replicas: 0
+            ```
     - Scaling down Automation Hub: 
-        - [Hub Site 1](https://github.com/hammer-redhat/aap-multisite-failover-eda/blob/main/playbooks/hub/scale_down_hub-site1.yml)
-        - [Hub Site 2](https://github.com/hammer-redhat/aap-multisite-failover-eda/blob/main/playbooks/hub/scale_down_hub-site2.yml)
+        - Configure a job_template in AAP using the following playbook: [scale-aap-hub.yml](https://github.com/hammer-redhat/aap-multisite-failover-eda/blob/main/playbooks/hub/scale-aap-hub.yml)
+        - Job Template Extra Vars:
+            ```
+            hub_cr_name: hub-aws-01
+            hub_cr_namespace: aap-24-site-1
+            web_desired_replicas: 0
+            content_desired_replicas: 0
+            api_desired_replicas: 0
+            redis_desired_replicas: 0
+            worker_desired_replicas: 0
+            ```
 
 ## Rulebooks
 - There are four rulebooks preconfigured for you, one to monitor postgres per site for both Automation Controller and Hub. 
@@ -75,12 +103,12 @@ High-Level Workflow for AAP Failover Automation using Event-Driven Ansible
 
 ## Execution Environment
 - There is one execution environment that is required to be used that includes the `redhat.openshift` collection and that is included here and can be built using the following steps as an example. 
-```
-ansible-builder build -f execution_environment/k8s_ee.yml -t k8s_ee
-podman images # grab the Image ID to then push to automation hub.
-podman login aap.example.com
-podman push <paste Image ID> aap.example.com/namespace_example/k8s_ee
-```
+    ```
+    ansible-builder build -f execution_environment/k8s_ee.yml -t k8s_ee
+    podman images # copy the Image ID to push the image into automation hub.
+    podman login aap.example.com # login with automation hub creds
+    podman push <paste Image ID> aap.example.com/namespace_example/k8s_ee
+    ```
 
 ## Usage
 To use AAP Multi Site Failover EDA in AAP:  
@@ -90,7 +118,7 @@ To use AAP Multi Site Failover EDA in AAP:
 3. Credentials in Controller - You will need to create Openshift Token credentials in AAP to authenticate into Openshift and scale your CR's accordingly.
 ![alt text](screenshots/credentials.png)
 4. Ensure you have created and pushed an execution environment with the `redhat.openshift` and `ansible.eda collections`.
-5. Create the four job templates using the scale up/down playbooks for each site. This equals out to 2 job templates per site (up/down playbooks are separate) and 4 playbooks total across both sites. Note that for these playbooks you will need to use your Openshift API credential created earlier as well as the `k8s_ee` as an execution environment that has the `redhat.openshift` collection installed. 
+5. Create four job templates using the scale up/down playbooks for each site. This equals out to 2 job templates per site (up/down playbooks are separate) and 4 playbooks total across both sites. Note that for these playbooks you will need to use your Openshift API credential created earlier as well as the `k8s_ee` as an execution environment that has the `redhat.openshift` collection installed. 
 Once complete you should have four playbooks:
 ![alt text](screenshots/four_templates.png)
 6. With all of the playbooks configured you can now swap over to the `Automation Decisions - Event-Driven Ansible` tab on the left side of the screen to configure the following:

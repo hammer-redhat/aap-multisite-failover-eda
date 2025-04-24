@@ -22,7 +22,7 @@ High-Level Workflow for AAP Failover Automation using Event-Driven Ansible
 2. Database Role Decision Logic
     - The rulebook determines which action to take based on the current role of the database:
       - If the database is not in recovery (i.e., it is primary), the system scales up the AAP Custom Resource (CR) in OpenShift (OCP).
-      - If the database is in recovery (i.e., it is a read-only replica), the system scales down the AAP CRD, as it's not the primary node.
+      - If the database is in recovery (i.e., it is a read-only replica/standby node), the system scales down the AAP CR. 
 
 3. Active/Standby Site Symmetry
     - Both Primary and Secondary sites follow an identical automated logic, ensuring continuous monitoring and responsiveness to changes in database roles.

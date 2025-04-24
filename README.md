@@ -47,7 +47,7 @@ High-Level Workflow for AAP Failover Automation using Event-Driven Ansible
 ## Playbooks
 - Deploy postgres script: This playbook deploys the two python scripts from the files directory (postgres_check_site1.py  & postgres_check_site2.py) and configured a cronjob to run them every minute. There is an example postgres_check you can use to populate these files with your DB connection settings. 
 - Failover EDB: These playbooks were created to simplify triggering the database failover on the EnterpriseDB PostgreSQL cluster we deployed. It utilized the playbooks shipped with tpaexec and is located here - `/opt/EDB/TPA/architectures/M1/commands/switchover.yml`. You can ignore using these playbooks as they're used for demonstrating failover scenarios for this use case.
--  Scale up/down AAP: These playbooks use the `redhat.openshift.k8s` module to apply changes to AAP Custom Resources in Openshift. The playbooks use the following files in this repo:  
+-  Scaling Controller/Hub: These playbooks use the `redhat.openshift.k8s` module to apply changes to AAP Custom Resources in Openshift.
     - Scaling up Automation Controller:   
         - Configure a job_template in AAP using the following playbook: [scale-aap-controller.yml](https://github.com/hammer-redhat/aap-multisite-failover-eda/blob/main/playbooks/controller/scale-aap-controller.yml)
         - Job Template Extra Vars:

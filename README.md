@@ -98,7 +98,7 @@ High-Level Workflow for AAP Failover Automation using Event-Driven Ansible
         - [Monitor Hub PG Site 1](https://github.com/hammer-redhat/aap-multisite-failover-eda/blob/main/rulebooks/hub_pg_monitor_rulebook_site1.yml)
         - [Monitor Hub PG Site 2](https://github.com/hammer-redhat/aap-multisite-failover-eda/blob/main/rulebooks/hub_pg_monitor_rulebook_site2.yml)
 - These will be the rulebooks that are configured to listen to the `Event Streams` you'll setup later.
-- These rulebooks trigger based on the webhook data that's returned in the payload `payload.in_recovery` with a result of `true` or `false`. 
+- These rulebooks trigger based on the webhook data that's returned in the payload `payload.in_recovery` with a result of `true` or `false`.  
 ![alt text](screenshots/event_details.png)
 
 ## Execution Environment

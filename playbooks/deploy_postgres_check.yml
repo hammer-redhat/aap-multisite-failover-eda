@@ -1,0 +1,53 @@
+---
+- name: Deploy postgres_check.py and schedule it with cron
+  hosts: all
+  become: true
+
+  tasks:
+    - name: Deploy the postgres check for Controller site 1.
+      copy:
+        src: ../files/postgres_check_site1.py
+        dest: /usr/local/bin/controller_postgres_check_site1.py
+        mode: '0755'
+    
+    - name: Deploy the postgres check for Controller site 2. 
+      copy:
+        src: ../files/postgres_check_site2.py
+        dest: /usr/local/bin/controller_postgres_check_site2.py
+        mode: '0755'
+
+    - name: Deploy the postgres check for Hub site 1.
+      copy:
+        src: ../files/postgres_check_site1.py
+        dest: /usr/local/bin/hub_postgres_check_site1.py
+        mode: '0755'
+    
+    - name: Deploy the postgres check for Hub site 2. 
+      copy:
+        src: ../files/postgres_check_site2.py
+        dest: /usr/local/bin/hub_postgres_check_site2.py
+        mode: '0755'
+
+    - name: Create cron job to run Controller site 1 postgres checks. 
+      cron:
+        name: Run postgres check for Controller site 1.
+        minute: '*'
+        job: "python3 /usr/local/bin/controller_postgres_check_site1.py"
+
+    - name: Create cron job to run Controller site 2 postgres checks. 
+      cron:
+        name: Run postgres check for Controller site 2.
+        minute: '*'
+        job: "python3 /usr/local/bin/controller_postgres_check_site2.py"
+
+    - name: Create cron job to run Hub site 1 postgres checks. 
+      cron:
+        name: Run postgres check for Hub site 1.
+        minute: '*'
+        job: "python3 /usr/local/bin/hub_postgres_check_site1.py"
+
+    - name: Create cron job to run Hub site 2 postgres checks. 
+      cron:
+        name: Run postgres check for Hub site 2.
+        minute: '*'
+        job: "python3 /usr/local/bin/hub_postgres_check_site2.py"

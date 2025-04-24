@@ -1,0 +1,21 @@
+---
+- name: Monitor PostgreSQL Role
+  hosts: all
+  sources:
+    - name: AAP 2.5 Event Stream
+      ansible.eda.webhook:
+
+  rules:
+    - name: Scale up - Site 2
+      condition: event.payload.in_recovery == false
+      action:
+        run_job_template:
+          name: "Scale up AAP Hub Site 2 CR"
+          organization: "Default"
+
+    - name: Scale down - Site 2
+      condition: event.payload.in_recovery == true
+      action:
+        run_job_template:
+          name: "Scale down AAP Hub Site 2 CR"
+          organization: "Default"

@@ -1,0 +1,24 @@
+- name: Bring down Hub Site 1.
+  hosts: localhost
+  gather_facts: false
+  tasks:
+    - name: Scale Hub CR replicas according to role. 
+      redhat.openshift.k8s:
+        state: present
+        api_version: automationhub.ansible.com/v1beta1
+        kind: AutomationHub
+        name: hub-aws-01
+        namespace: aap-24
+        merge_type: merge 
+        definition:
+          spec:
+            web:
+              replicas: 0
+            content:
+              replicas: 0
+            api: 
+              replicas: 0
+            redis: 
+              replicas: 0
+            worker: 
+              replicas: 0

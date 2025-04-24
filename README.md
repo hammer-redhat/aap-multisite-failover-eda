@@ -49,20 +49,27 @@ High-Level Workflow for AAP Failover Automation using Event-Driven Ansible
 - Failover EDB: These playbooks were created to simplify triggering the database failover on the EnterpriseDB PostgreSQL cluster we deployed. It utilized the playbooks shipped with tpaexec and is located here - `/opt/EDB/TPA/architectures/M1/commands/switchover.yml`. You can ignore using these playbooks as they're used for demonstrating failover scenarios for this use case.
 -  Scale up/down AAP: These playbooks use the `redhat.openshift.k8s` module to apply changes to AAP Custom Resources in Openshift. The playbooks use the following files in this repo:  
     - Scaling up Automation Controller:   
-        - [Site 1](https://github.com/hammer-redhat/aap-multisite-failover-eda/blob/working-state/playbooks/controller/scale_up_aap-site1.yml)
-        - [Site 2](https://github.com/hammer-redhat/aap-multisite-failover-eda/blob/working-state/playbooks/controller/scale_up_aap-site2.yml)
+        - [Controller Site 1](https://github.com/hammer-redhat/aap-multisite-failover-eda/blob/main/playbooks/controller/scale_up_aap-site1.yml)
+        - [Controller Site 2](https://github.com/hammer-redhat/aap-multisite-failover-eda/blob/main/playbooks/controller/scale_up_aap-site2.yml)
     - Scaling up Automation Hub: 
-        - 
-    - Scaling down: 
-        - aap-cr-down-site1.yml
-        - aap-cr-down-site2.yml
-    - These files change line 30 in the files from `replicas: 0` -> `replicas: 1` when scaling up and vice versa.  
+        - [Hub Site 1](https://github.com/hammer-redhat/aap-multisite-failover-eda/blob/main/playbooks/hub/scale_up_hub-site1.yml)
+        - [Hub Site 2](https://github.com/hammer-redhat/aap-multisite-failover-eda/blob/main/playbooks/hub/scale_up_hub-site2.yml)
+    - Scaling down Automation Controller:
+        - [Controller Site 1](https://github.com/hammer-redhat/aap-multisite-failover-eda/blob/main/playbooks/controller/scale_down_aap-site1.yml)
+        - [Controller Site 2](https://github.com/hammer-redhat/aap-multisite-failover-eda/blob/main/playbooks/controller/scale_down_aap-site2.yml)
+    - Scaling down Automation Hub: 
+        - [Hub Site 1](https://github.com/hammer-redhat/aap-multisite-failover-eda/blob/main/playbooks/hub/scale_down_hub-site1.yml)
+        - [Hub Site 2](https://github.com/hammer-redhat/aap-multisite-failover-eda/blob/main/playbooks/hub/scale_down_hub-site2.yml)
 
 ## Rulebooks
-- There are two rulebooks preconfigured for you, one to monitor postgres per site. 
-    - pg_monitor_rulebook_site1.yml
-    - pg_monitor_rulebook_site2.yml
-- These will be the rulebooks that are configured to listen to the `Event Streams` we configure later.
+- There are four rulebooks preconfigured for you, one to monitor postgres per site for both Automation Controller and Hub. 
+    - Controller:
+        - [Monitor Controller PG Site 1](https://github.com/hammer-redhat/aap-multisite-failover-eda/blob/main/rulebooks/controller_pg_monitor_rulebook_site1.yml)
+        - [Monitor Controller PG Site 2](https://github.com/hammer-redhat/aap-multisite-failover-eda/blob/main/rulebooks/controller_pg_monitor_rulebook_site2.yml)
+    - Hub:
+        - [Monitor Hub PG Site 1](https://github.com/hammer-redhat/aap-multisite-failover-eda/blob/main/rulebooks/hub_pg_monitor_rulebook_site1.yml)
+        - [Monitor Hub PG Site 2](https://github.com/hammer-redhat/aap-multisite-failover-eda/blob/main/rulebooks/hub_pg_monitor_rulebook_site2.yml)
+- These will be the rulebooks that are configured to listen to the `Event Streams` you'll setup later.
 - These rulebooks trigger based on the webhook data that's returned in the payload `payload.in_recovery` with a result of `true` or `false`. 
 ![alt text](screenshots/event_details.png)
 

@@ -43,6 +43,7 @@ High-Level Workflow for AAP Failover Automation using Event-Driven Ansible
 - AAP 2.4 components configured and deployed in Openshift to use the external Postgres cluster.
     - Feel free to use another repo of mine as an example: [AAP-on-OCP](https://github.com/hammer-redhat/aap-on-ocp)
 - Ability to perform manual switchover by promoting the standby PostgreSQL instance to primary (or other failover triggers as needed).
+- Registry credentials for `registry.redhat.io` or access to an internal registry with the de-supported images, for example: `ansible-automation-platform-25/de-supported-rhel8`. 
 
 ## Playbooks
 - Deploy postgres script: This playbook deploys the two python scripts from the files directory (postgres_check_site1.py  & postgres_check_site2.py) and configured a cronjob to run them every minute. There is an example postgres_check you can use to populate these files with your DB connection settings. 

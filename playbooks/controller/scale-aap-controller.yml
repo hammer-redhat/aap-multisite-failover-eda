@@ -1,15 +1,15 @@
-- name: Bring up AAP Site 2.
+- name: Scale AAP Controller to desired state.
   hosts: localhost
   gather_facts: false
   tasks:
-    - name: Scale AAP CR replicas according to role. 
+    - name: Scale AAP Controller CR replicas according to role. 
       redhat.openshift.k8s:
         state: present
         api_version: automationcontroller.ansible.com/v1beta1
         kind: AutomationController
-        name: controller-edb-02
-        namespace: aap-24-dr
+        name: "{{ controller_cr_name }}"
+        namespace: "{{ controller_cr_namespace }}"
         merge_type: merge 
         definition:
           spec:
-            replicas: 1
+            replicas: "{{ desired_replicas }}"

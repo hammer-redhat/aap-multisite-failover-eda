@@ -2,6 +2,7 @@
 ## Table of Contents
 
 - [Overview](#overview)
+- [Architecture](#architecture)
 - [Diagram](#diagram)
 - [Prerequisites](#prerequisites)
 - [Playbooks](#playbooks)
@@ -26,6 +27,9 @@ High-Level Workflow for AAP Failover Automation using Event-Driven Ansible
 
 3. Active/Standby Site Symmetry
     - Both Primary and Secondary sites follow an identical automated logic, ensuring continuous monitoring and responsiveness to changes in database roles.
+
+## Architecture
+![alt text](screenshots/architecture.png)
 
 ## Diagram
 ![alt text](screenshots/diagram.png)

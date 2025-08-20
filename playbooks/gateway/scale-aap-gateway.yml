@@ -5,7 +5,7 @@
     - name: Scale AAP Gateway CR replicas according to role. 
       redhat.openshift.k8s:
         state: present
-        api_version: apiVersion: aap.ansible.com/v1alpha1
+        api_version: aap.ansible.com/v1alpha1
         kind: AnsibleAutomationPlatform
         name: "{{ gateway_cr_name }}"
         namespace: "{{ gateway_cr_namespace }}"

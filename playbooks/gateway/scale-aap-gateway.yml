@@ -12,5 +12,4 @@
         merge_type: merge 
         definition:
           spec:
-            api:
-              replicas: "{{ desired_replicas }}"
+            idle_aap: "{{ idle_aap }}"

@@ -11,11 +11,11 @@
       action:
         run_job_template:
           name: "Scale up Gateway Site 1 CR"
-          organization: "Default"
+          organization: "AAP-Multisite-Failover"
 
     - name: Scale down - Site 1
       condition: event.payload.in_recovery == true
       action:
         run_job_template:
           name: "Scale down Gateway Site 1 CR"
-          organization: "Default"
+          organization: "AAP-Multisite-Failover"

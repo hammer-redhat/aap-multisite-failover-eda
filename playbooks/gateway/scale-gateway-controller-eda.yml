@@ -1,0 +1,39 @@
+- name: Scale AAP Gateway to desired state.
+  hosts: localhost
+  gather_facts: false
+  tasks:
+    - name: Scale AAP Gateway CR replicas according to role. 
+      redhat.openshift.k8s:
+        state: present
+        api_version: aap.ansible.com/v1alpha1
+        kind: AnsibleAutomationPlatform
+        name: "{{ gateway_cr_name }}"
+        namespace: "{{ gateway_cr_namespace }}"
+        merge_type: merge 
+        definition:
+          spec:
+            idle_aap: "{{ idle_aap }}"
+
+    - name: Update Controller idle_deployment value
+      redhat.openshift.k8s:
+        state: present
+        api_version: automationcontroller.ansible.com/v1beta1
+        kind: AutomationController
+        name: "{{ controller_cr_name }}"
+        namespace: "{{ gateway_cr_namespace }}"
+        merge_type: merge
+        definition:
+          spec:
+            idle_deployment: "{{ idle_aap }}"
+
+    - name: Update Automation EDA idle_deployment value
+      redhat.openshift.k8s:
+        state: present
+        api_version: eda.ansible.com/v1alpha1
+        kind: EDA
+        name: "{{ eda_cr_name }}"
+        namespace: "{{ gateway_cr_namespace }}"
+        merge_type: merge
+        definition:
+          spec:
+            idle_deployment: "{{ idle_aap }}"

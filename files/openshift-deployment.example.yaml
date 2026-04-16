@@ -61,7 +61,7 @@ spec:
       restartPolicy: Never
       containers:
         - name: postgres-check
-          image: image-registry.openshift-image-registry.svc:5000/your-namespace/postgres-check:latest
+          image: quay.io/chrhamme/postgres-check:v3
           # Use Always while iterating so node caches do not keep a wrong-arch :latest
           imagePullPolicy: Always
           envFrom:
@@ -98,7 +98,7 @@ spec:
           restartPolicy: Never
           containers:
             - name: postgres-check
-              image: image-registry.openshift-image-registry.svc:5000/your-namespace/postgres-check:latest
+              image: quay.io/chrhamme/postgres-check:v3
               imagePullPolicy: Always
               envFrom:
                 - secretRef:

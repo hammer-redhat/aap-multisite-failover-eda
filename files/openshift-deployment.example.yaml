@@ -1,0 +1,112 @@
+# Example: Job or CronJob wiring env from Secrets / ConfigMaps.
+# Adjust namespace, image, schedules, and secret keys to match your cluster.
+#
+# Image CPU arch must match your *nodes* (not your laptop). "Exec format error" on
+# python means wrong arch — e.g. arm64 image on amd64 nodes, or amd64 image on arm64 nodes.
+#
+# Check node arch (pick any Ready node):
+#   oc get nodes -o jsonpath='{.items[0].status.nodeInfo.architecture}{"\n"}'
+# amd64 -> build with: CLUSTER_ARCH=amd64 ./build-for-openshift.sh -t <image>
+# arm64 -> build with: CLUSTER_ARCH=arm64 ./build-for-openshift.sh -t <image>
+#
+# After fixing the image, use a new tag or set imagePullPolicy: Always so workers
+# do not keep an old cached :latest.
+#
+# Database Secret (e.g. console → aap-26 → Secrets → postgres-check-db):
+# - The Job uses envFrom with secretRef name postgres-check-db, so each key in that
+#   Secret becomes an environment variable with the same name inside the container.
+# - The script reads DB_CONFIG (a JSON string with host, port, dbname, user, password).
+#   If DB_CONFIG is absent, it uses PGHOST, PGUSER, PGPASSWORD, PGPORT, PGDATABASE.
+# - Editing the Secret in the console updates what the next Job run sees; you do not
+#   need to change the Job spec unless you rename the Secret or switch to env: items.
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: postgres-check-webhook
+  labels:
+    app: postgres-check
+stringData:
+  WEBHOOK_URL: "https://your-event-stream-endpoint.example/webhook"
+  AUTH_TOKEN: "replace-with-token"
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: postgres-check-db
+  labels:
+    app: postgres-check
+stringData:
+  # Key must be DB_CONFIG (matches what postgres_check_example.py reads from the env).
+  # Option A: single JSON (good when templating the whole blob from Ansible/Vault)
+  DB_CONFIG: |
+    {
+      "host": "db.example.com",
+      "port": 5432,
+      "dbname": "awx",
+      "user": "awx",
+      "password": "changeme"
+    }
+  # Option B: omit DB_CONFIG and use PGHOST / PGUSER / PGPASSWORD / PGDATABASE instead
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: postgres-check-example
+  labels:
+    app: postgres-check
+spec:
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: postgres-check
+          image: quay.io/chrhamme/postgres-check:v3
+          # Use Always while iterating so node caches do not keep a wrong-arch :latest
+          imagePullPolicy: Always
+          envFrom:
+            - secretRef:
+                name: postgres-check-webhook
+            - secretRef:
+                name: postgres-check-db
+          env:
+            # Optional: set to "false" only if the webhook uses a private CA and you inject certs separately
+            - name: WEBHOOK_SSL_VERIFY
+              value: "true"
+      securityContext:
+        runAsNonRoot: true
+---
+# Runs the same check on a schedule. Schedule uses standard cron (minute hour dom month dow).
+# Every minute is useful for testing; consider */5 * * * * or less often in production.
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: postgres-check-cron
+  labels:
+    app: postgres-check
+spec:
+  schedule: "* * * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 2
+  failedJobsHistoryLimit: 4
+  startingDeadlineSeconds: 200
+  jobTemplate:
+    spec:
+      backoffLimit: 2
+      template:
+        spec:
+          restartPolicy: Never
+          containers:
+            - name: postgres-check
+              image: quay.io/chrhamme/postgres-check:v3
+              imagePullPolicy: Always
+              envFrom:
+                - secretRef:
+                    name: postgres-check-webhook
+                - secretRef:
+                    name: postgres-check-db
+              env:
+                - name: WEBHOOK_SSL_VERIFY
+                  value: "true"
+          securityContext:
+            runAsNonRoot: true

@@ -1,5 +1,5 @@
 ---
-- name: Call the playbook run from bastion node to fialover the EDB cluster to Site 2 as the primary. 
+- name: Call the playbook run from bastion node to failover the EDB cluster to Site 2 as the primary. 
   hosts: all
   gather_facts: false
   tasks: 

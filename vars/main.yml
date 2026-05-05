@@ -1,9 +1,12 @@
 ---
+# Namespace for the AAP deployment
+namespace_site_one: "aap-26"
+namespace_site_two: "aap-26-dr"
 # DB Cluster info: site one
 db_host_site_one: ""
 db_host_site_two: ""
 db_port: ""
-db_sslmode: ""
+db_sslmode: "prefer" # "disable", "require", "verify-full", "verify-ca"
 # Maps to operator_crs/secrets/external-postgres-configuration-controller.yml
 # Flat names used by the Secret template (Jinja in that manifest)
 db_name_controller: ""
@@ -24,3 +27,18 @@ db_username_hub: ""
 db_name_gateway: ""
 db_password_gateway: ""
 db_username_gateway: ""
+# Maps to operator_crs/secrets/site_one/aap-26-controller-admin-password.yml
+# Flat names used by the Secret template (Jinja in that manifest)
+controller_admin_password: ""
+# Maps to operator_crs/secrets/site_one/aap-26-admin-password.yml
+# Flat names used by the Secret template (Jinja in that manifest)
+aap_admin_password: ""
+# Maps to operator_crs/secrets/site_one/aap-26-controller-secret-key.yml
+# Flat names used by the Secret template (Jinja in that manifest)
+controller_secret_key: ""
+# Maps to operator_crs/secrets/site_one/aap-26-automationhub-db-fields-encryption.yml
+# Flat names used by the Secret template (Jinja in that manifest)
+automationhub_db_fields_encryption_key: ""
+# Maps to operator_crs/secrets/site_one/aap-db-fields-encryption-secret.yml
+# Flat names used by the Secret template (Jinja in that manifest)
+aap_db_fields_encryption_key: ""

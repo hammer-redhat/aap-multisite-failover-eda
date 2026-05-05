@@ -1,14 +1,15 @@
 ---
 # Apply operator CRs and secrets for site one. Requires an OpenShift/Kubernetes
-# context (for example oc login or KUBECONFIG). Template variables such as
-# namespace_site_one, database credentials, and secret values must be supplied
-# via -e, inventory, or a vars file.
+# context (for example oc login or KUBECONFIG). Defaults load from vars/main.yml;
+# override with -e or additional vars_files as needed.
 #
 # Order: subscription.yml (Namespace, OperatorGroup, Subscription) -> 30s pause
 # -> remaining secret manifests -> aap_cr_site_one.yml last.
 - name: Deploy AAP operator resources and secrets (site one)
   hosts: localhost
   gather_facts: false
+  vars_files:
+    - ../../vars/main.yml
   vars:
     site_one_crs_dir: "{{ (playbook_dir ~ '/../../operator_crs/secrets/site_one') | realpath }}"
     # External Postgres secrets first, then AAP credentials (override if you add files).
@@ -33,13 +34,19 @@
       ansible.builtin.pause:
         seconds: 30
 
-    - name: Apply AAP secrets & manifests
+    - name: Build combined document list for secret manifests
+      ansible.builtin.set_fact:
+        _site_one_secret_docs: "{{ _site_one_secret_docs | default([]) + (lookup('template', site_one_crs_dir ~ '/' ~ item) | from_yaml_all | list) }}"
+      loop: "{{ site_one_secret_manifests }}"
+
+    - name: Apply secret manifests
       redhat.openshift.k8s:
         state: present
         definition: "{{ item }}"
-      loop: "{{ site_one_secret_manifests }}"
+      loop: "{{ _site_one_secret_docs }}"
 
     - name: Apply AnsibleAutomationPlatform CR last
       redhat.openshift.k8s:
         state: present
-        definition: "{{ site_one_crs_dir }}/aap_cr_site_one.yml"
+        definition: "{{ item }}"
+      loop: "{{ lookup('template', site_one_crs_dir ~ '/aap_cr_site_one.yml') | from_yaml_all | list }}"

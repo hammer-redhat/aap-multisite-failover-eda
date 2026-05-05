@@ -1,0 +1,27 @@
+---
+apiVersion: aap.ansible.com/v1alpha1
+kind: AnsibleAutomationPlatform
+metadata:
+  name: aap-26
+  namespace: aap-26 
+spec:
+  route_tls_termination_mechanism: Edge
+  no_log: true
+  redis_mode: cluster
+  image_pull_policy: Always
+  api:
+    log_level: INFO
+    replicas: 1
+  database:
+    postgres_data_volume_init: false
+    database_secret: external-postgres-configuration-gateway
+    disabled: false
+  controller:
+     postgres_configuration_secret: external-postgres-configuration-controller
+  hub:
+     postgres_configuration_secret: external-postgres-configuration-hub
+  eda:
+     database:
+       database_secret: external-postgres-configuration-eda
+  lightspeed: 
+    disabled: true

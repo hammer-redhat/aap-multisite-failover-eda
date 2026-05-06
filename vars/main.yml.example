@@ -1,0 +1,52 @@
+---
+# Namespace for the AAP deployment
+namespace_site_one: "aap-26"
+namespace_site_two: "aap-26-dr"
+
+# Postgres configuration
+postgres_admin_user: ""
+postgres_admin_password: ""
+postgres_configure_host: "{{ db_host_site_one }}"
+postgres_configure_port: "{{ db_port}}"
+postgres_configure_sslmode: "{{ db_sslmode }}" # "disable", "require", "verify-full", "verify-ca"
+
+# DB Cluster info: site one
+db_host_site_one: ""
+db_host_site_two: ""
+db_port: ""
+db_sslmode: "prefer" # "disable", "require", "verify-full", "verify-ca"
+# Maps to operator_crs/secrets/external-postgres-configuration-controller.yml
+# Flat names used by the Secret template (Jinja in that manifest)
+db_name_controller: ""
+db_password_controller: ""
+db_username_controller: ""
+# Maps to operator_crs/secrets/external-postgres-configuration-eda.yml
+# Flat names used by the Secret template (Jinja in that manifest)
+db_name_eda: ""
+db_password_eda: ""
+db_username_eda: ""
+# Maps to operator_crs/secrets/external-postgres-configuration-hub.yml
+# Flat names used by the Secret template (Jinja in that manifest)
+db_name_hub: ""
+db_password_hub: ""
+db_username_hub: ""
+# Maps to operator_crs/secrets/external-postgres-configuration-gateway.yml
+# Flat names used by the Secret template (Jinja in that manifest)
+db_name_gateway: ""
+db_password_gateway: ""
+db_username_gateway: ""
+# Maps to operator_crs/secrets/site_one/aap-26-controller-admin-password.yml
+# Flat names used by the Secret template (Jinja in that manifest)
+controller_admin_password: ""
+# Maps to operator_crs/secrets/site_one/aap-26-admin-password.yml
+# Flat names used by the Secret template (Jinja in that manifest)
+aap_admin_password: ""
+# Maps to operator_crs/secrets/site_one/aap-26-controller-secret-key.yml
+# Flat names used by the Secret template (Jinja in that manifest)
+controller_secret_key: ""
+# Maps to operator_crs/secrets/site_one/aap-26-automationhub-db-fields-encryption.yml
+# Flat names used by the Secret template (Jinja in that manifest)
+automationhub_db_fields_encryption_key: ""
+# Maps to operator_crs/secrets/site_one/aap-db-fields-encryption-secret.yml
+# Flat names used by the Secret template (Jinja in that manifest)
+aap_db_fields_encryption_key: ""

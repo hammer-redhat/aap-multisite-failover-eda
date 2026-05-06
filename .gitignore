@@ -2,3 +2,4 @@
 postgres_check_site1.py
 postgres_check_site2.py
 inventory
+vars/main.yml

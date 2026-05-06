@@ -2,6 +2,14 @@
 # Namespace for the AAP deployment
 namespace_site_one: "aap-26"
 namespace_site_two: "aap-26-dr"
+
+# Postgres configuration
+postgres_admin_user: ""
+postgres_admin_password: ""
+postgres_configure_host: "{{ db_host_site_one }}"
+postgres_configure_port: "{{ db_port}}"
+postgres_configure_sslmode: "{{ db_sslmode }}" # "disable", "require", "verify-full", "verify-ca"
+
 # DB Cluster info: site one
 db_host_site_one: ""
 db_host_site_two: ""

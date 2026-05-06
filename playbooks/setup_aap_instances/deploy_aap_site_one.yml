@@ -1,10 +1,4 @@
 ---
-# Apply operator CRs and secrets for site one. Requires an OpenShift/Kubernetes
-# context (for example oc login or KUBECONFIG). Defaults load from vars/main.yml;
-# override with -e or additional vars_files as needed.
-#
-# Order: subscription.yml (Namespace, OperatorGroup, Subscription) -> 30s pause
-# -> remaining secret manifests -> aap_cr_site_one.yml last.
 - name: Deploy AAP operator resources and secrets (site one)
   hosts: localhost
   gather_facts: false
@@ -22,7 +16,8 @@
       - aap-26-automationhub-db-fields-encryption.yml
       - aap-26-controller-admin-password.yml
       - aap-26-controller-secret-key.yml
-      - aap-db-fields-encryption-secret.yml
+      - aap-26-db-fields-encryption-secret.yml
+      - aap-26-eda-db-fields-encryption-secret.yml
   tasks:
     - name: Apply subscription manifest (Namespace, OperatorGroup, Subscription)
       redhat.openshift.k8s:

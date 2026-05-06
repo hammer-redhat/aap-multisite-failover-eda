@@ -50,3 +50,6 @@ automationhub_db_fields_encryption_key: ""
 # Maps to operator_crs/secrets/site_one/aap-db-fields-encryption-secret.yml
 # Flat names used by the Secret template (Jinja in that manifest)
 aap_db_fields_encryption_key: ""
+# Maps to operator_crs/secrets/site_one/aap-26-eda-db-fields-encryption-secret.yml
+# Flat names used by the Secret template (Jinja in that manifest)
+aap_eda_db_fields_encryption_key: ""

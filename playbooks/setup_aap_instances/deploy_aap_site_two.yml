@@ -19,6 +19,17 @@
       - aap-26-db-fields-encryption-secret.yml
       - aap-26-eda-db-fields-encryption-secret.yml
   tasks:
+    - name: Validate Automation Hub content storage variables
+      ansible.builtin.include_tasks: tasks/validate_hub_content_storage.yml
+
+    - name: Select Automation Hub object storage Secret manifests (site two)
+      ansible.builtin.set_fact:
+        _site_two_hub_storage_manifests: >-
+          {{
+            ['automation-hub-object-storage-s3.yml'] if (hub_content_storage_type | default('')) == 's3' else (
+            ['automation-hub-object-storage-azure.yml'] if (hub_content_storage_type | default('')) == 'azure' else [])
+          }}
+
     - name: Apply subscription manifest (Namespace, OperatorGroup, Subscription)
       redhat.openshift.k8s:
         state: present
@@ -32,7 +43,7 @@
     - name: Build combined document list for secret manifests
       ansible.builtin.set_fact:
         _site_two_secret_docs: "{{ _site_two_secret_docs | default([]) + (lookup('template', site_two_crs_dir ~ '/' ~ item) | from_yaml_all | list) }}"
-      loop: "{{ site_two_secret_manifests }}"
+      loop: "{{ site_two_secret_manifests + (_site_two_hub_storage_manifests | default([])) }}"
 
     - name: Apply secret manifests
       redhat.openshift.k8s:

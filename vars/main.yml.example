@@ -57,14 +57,16 @@ aap_eda_db_fields_encryption_key: ""
 # --- Automation Hub content storage (exclusive: set hub_content_storage_type to one backend) ---
 # Leave hub_content_storage_type empty to omit extra hub persistence settings from the CR
 # (operator default file storage). Use s3, azure, or file for explicit configuration.
-#
-# hub_content_storage_type: "s3"
-# hub_object_storage_secret_name: "aap-26-hub-object-storage"
+
+# USE THIS FOR S3 STORAGE
+# hub_content_storage_type: ""
+# hub_object_storage_secret_name: ""
 # hub_s3_access_key_id: ""
 # hub_s3_secret_access_key: ""
 # hub_s3_bucket_name: ""
 # hub_s3_region: ""
-#
+
+# USE THIS FOR AZURE BLOB STORAGE
 # hub_content_storage_type: "azure"
 # hub_object_storage_secret_name: "aap-26-hub-object-storage"
 # hub_azure_account_name: ""
@@ -72,7 +74,8 @@ aap_eda_db_fields_encryption_key: ""
 # hub_azure_container: ""
 # hub_azure_container_path: ""   # optional
 # hub_azure_connection_string: ""  # optional
-#
+
+# USE THIS FOR NFS/FILE STORAGE
 # hub_content_storage_type: "file"
 # hub_file_storage_storage_class: ""  # e.g. an RWX-capable StorageClass (NFS-backed)
 # hub_file_storage_size: "100Gi"

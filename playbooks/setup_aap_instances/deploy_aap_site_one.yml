@@ -40,6 +40,32 @@
       ansible.builtin.pause:
         seconds: 30
 
+    - name: Resolve Automation Hub NFS PersistentVolume name (site one)
+      when:
+        - hub_content_storage_type | default('') == 'file'
+        - hub_file_storage_provisioning | default('dynamic') == 'static_nfs'
+      ansible.builtin.set_fact:
+        _hub_file_storage_pv_site: "{{ hub_file_storage_pv_name_site_one | default(hub_file_storage_pv_name) }}"
+
+    - name: Verify Automation Hub NFS PV name resolves for site one
+      when:
+        - hub_content_storage_type | default('') == 'file'
+        - hub_file_storage_provisioning | default('dynamic') == 'static_nfs'
+      ansible.builtin.assert:
+        that:
+          - (_hub_file_storage_pv_site | default('')) | length > 0
+        fail_msg: >-
+          Define hub_file_storage_pv_name or hub_file_storage_pv_name_site_one for static NFS.
+
+    - name: Apply Automation Hub NFS PersistentVolume and claim (site one)
+      when:
+        - hub_content_storage_type | default('') == 'file'
+        - hub_file_storage_provisioning | default('dynamic') == 'static_nfs'
+      redhat.openshift.k8s:
+        state: present
+        definition: "{{ item }}"
+      loop: "{{ lookup('template', site_one_crs_dir ~ '/automation-hub-file-storage-nfs.yml') | from_yaml_all | list }}"
+
     - name: Build combined document list for secret manifests
       ansible.builtin.set_fact:
         _site_one_secret_docs: "{{ _site_one_secret_docs | default([]) + (lookup('template', site_one_crs_dir ~ '/' ~ item) | from_yaml_all | list) }}"

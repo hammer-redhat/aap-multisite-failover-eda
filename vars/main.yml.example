@@ -3,6 +3,10 @@
 namespace_site_one: "aap-26"
 namespace_site_two: "aap-26-dr"
 
+# Must match AnsibleAutomationPlatform metadata.name so the Operator can adopt the PVC
+# "{{ aap_instance_name }}-hub-file-storage"; keep in sync across all site manifests you use together.
+aap_instance_name: "aap-26"
+
 # Postgres configuration
 postgres_admin_user: ""
 postgres_admin_password: ""
@@ -75,7 +79,23 @@ aap_eda_db_fields_encryption_key: ""
 # hub_azure_container_path: ""   # optional
 # hub_azure_connection_string: ""  # optional
 
-# USE THIS FOR NFS/FILE STORAGE
+# USE THIS FOR NFS/FILE STORAGE — dynamic provisioning (cluster creates PVC from StorageClass)
 # hub_content_storage_type: "file"
+# hub_file_storage_provisioning: "dynamic"
 # hub_file_storage_storage_class: ""  # e.g. an RWX-capable StorageClass (NFS-backed)
 # hub_file_storage_size: "100Gi"
+
+# USE THIS FOR NFS/FILE STORAGE — manual PV/PVC against an NFS export (before the AAP CR reconciles Hub)
+# The playbooks render operator_crs/secrets/site_*/automation-hub-file-storage-nfs.yml — cluster-scoped PV
+# plus PVC named "{{ aap_instance_name }}-hub-file-storage" per Red Hat static storage guidance (omit StorageClass).
+# NFS server identifier is hostname or IP (export path below is server-side pathname for the NFS share root).
+#
+# hub_content_storage_type: "file"
+# hub_file_storage_provisioning: "static_nfs"
+# hub_file_storage_size: "100Gi"
+# hub_file_storage_nfs_server: "nfs.customer.example.com"
+# hub_file_storage_nfs_path: "/exports/ansible-automation-hub"
+# hub_file_storage_pv_name: "aap-hub-content-nfs-pv"
+# Separate PV names required if both site playbooks deploy to the same Kubernetes cluster:
+# hub_file_storage_pv_name_site_one: ""
+# hub_file_storage_pv_name_site_two: ""

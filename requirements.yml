@@ -8,16 +8,13 @@ collections:
   # Used by: playbooks/setup_aap_instances/configure_external_db.yml
   - name: community.postgresql
     version: ">=4.2.0"
-
   # Used by: playbooks/setup_aap_instances/deploy_aap_site_*.yml
   #           playbooks/gateway_scaling/scale-*.yml
   - name: redhat.openshift
     version: ">=4.0.0"
-
   # Hard dependency of redhat.openshift (k8s module backend)
   - name: kubernetes.core
     version: ">=5.0.0"
-
   # Used by: rulebooks/gateway_pg_monitor_rulebook_site*.yml (ansible.eda.webhook source)
   - name: ansible.eda
     version: ">=2.8.1"

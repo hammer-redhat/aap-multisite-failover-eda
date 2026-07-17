@@ -1,0 +1,862 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AAP Multi-Site Failover — Reference Architecture</title>
+<style>
+:root {
+  --bg:#F1F1F1;--surface:#FFFFFF;--band:#E6E6E6;--zone:#EBEBEB;--subzone:#F7F7F7;
+  --ink:#151515;--ink2:#4C4C4C;--ink3:#595959;--line:#C7C7C7;--line-soft:#DBDBDB;
+  --zone-a:#1D4174;--zone-b:#4CB6D6;
+  --flow-1:#D97E13;--flow-2:#5E40BE;--flow-3:#2E93B8;
+  --ok:#63993D;--warn:#B8860B;--plan:#8C8C8C;
+  --ok-bg:color-mix(in srgb,#63993D 18%,#FFFFFF);
+  --warn-bg:color-mix(in srgb,#B8860B 18%,#FFFFFF);
+}
+@media(prefers-color-scheme:dark){:root{
+  --bg:#1B1B1B;--surface:#292929;--band:#141414;--zone:#232323;--subzone:#1F1F1F;
+  --ink:#F2F2F2;--ink2:#C7C7C7;--ink3:#A3A3A3;--line:#4D4D4D;--line-soft:#3A3A3A;
+  --zone-a:#6B93CB;--zone-b:#4CB6D6;
+  --flow-1:#FAAA4F;--flow-2:#9B85E8;--flow-3:#5BC0DE;
+  --ok:#8CC152;--warn:#E0A83A;
+  --ok-bg:color-mix(in srgb,#8CC152 18%,#292929);
+  --warn-bg:color-mix(in srgb,#E0A83A 18%,#292929);
+}}
+:root[data-theme="light"]{
+  --bg:#F1F1F1;--surface:#FFFFFF;--band:#E6E6E6;--zone:#EBEBEB;--subzone:#F7F7F7;
+  --ink:#151515;--ink2:#4C4C4C;--ink3:#595959;--line:#C7C7C7;--line-soft:#DBDBDB;
+  --zone-a:#1D4174;--zone-b:#4CB6D6;
+  --flow-1:#D97E13;--flow-2:#5E40BE;--flow-3:#2E93B8;
+  --ok:#63993D;--warn:#B8860B;
+  --ok-bg:color-mix(in srgb,#63993D 18%,#FFFFFF);
+  --warn-bg:color-mix(in srgb,#B8860B 18%,#FFFFFF);
+}
+:root[data-theme="dark"]{
+  --bg:#1B1B1B;--surface:#292929;--band:#141414;--zone:#232323;--subzone:#1F1F1F;
+  --ink:#F2F2F2;--ink2:#C7C7C7;--ink3:#A3A3A3;--line:#4D4D4D;--line-soft:#3A3A3A;
+  --zone-a:#6B93CB;--zone-b:#4CB6D6;
+  --flow-1:#FAAA4F;--flow-2:#9B85E8;--flow-3:#5BC0DE;
+  --ok:#8CC152;--warn:#E0A83A;
+  --ok-bg:color-mix(in srgb,#8CC152 18%,#292929);
+  --warn-bg:color-mix(in srgb,#E0A83A 18%,#292929);
+}
+
+*{box-sizing:border-box;}
+body{margin:0;background:var(--bg);color:var(--ink);font-size:16px;line-height:1.5;
+  font-family:-apple-system,'Segoe UI',Roboto,'Noto Sans',sans-serif;}
+.mono{font-family:ui-monospace,'Cascadia Mono',Menlo,Consolas,monospace;}
+.shell{max-width:1180px;margin:0 auto;padding:0 20px;}
+
+header{background:var(--surface);border-bottom:1px solid var(--line-soft);padding:24px 0 20px;}
+.mast-row{display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:10px;}
+h1{font-size:clamp(19px,2.8vw,27px);margin:0 0 5px;letter-spacing:-0.01em;}
+.sub{color:var(--ink2);margin:0 0 10px;max-width:78ch;font-size:14.5px;}
+.meta{display:flex;flex-wrap:wrap;gap:6px 18px;font-size:12px;color:var(--ink3);}
+.meta span{font-family:ui-monospace,'Cascadia Mono',Menlo,Consolas,monospace;}
+.tbtn{font:inherit;font-size:12.5px;background:var(--surface);color:var(--ink2);
+  border:1px solid var(--line);padding:5px 11px;cursor:pointer;border-radius:2px;}
+.tbtn:hover{border-color:var(--ink2);}
+
+main{padding:26px 0 40px;}
+section{margin-bottom:36px;}
+.sec-h{font-size:16.5px;font-weight:700;margin:0 0 12px;padding-bottom:7px;
+  border-bottom:1px solid var(--line-soft);}
+
+/* Logical view */
+.logical{display:flex;flex-direction:column;gap:8px;}
+.tier{background:var(--zone);border:2px solid var(--zone-a);padding:12px 16px;}
+.tier.mgmt{border-color:var(--zone-b);}
+.tlabel{font-size:10.5px;font-weight:700;letter-spacing:.09em;color:var(--ink2);
+  text-transform:uppercase;margin:0 0 9px;}
+.tcards{display:flex;flex-wrap:wrap;gap:8px;}
+.card{background:var(--surface);border:1px solid var(--line);padding:9px 12px;
+  min-width:150px;flex:1 1 150px;max-width:260px;}
+.card.idle{border-style:dashed;}
+.cname{font-size:12px;font-weight:700;margin:0 0 1px;}
+.cdesc{font-size:11px;color:var(--ink2);margin:0 0 1px;}
+.cport{font-size:10px;color:var(--ink3);font-family:ui-monospace,'Cascadia Mono',Menlo,Consolas,monospace;margin:0;}
+.chip{display:inline-block;font-size:9.5px;font-weight:700;padding:1px 6px;border-radius:2px;margin-top:4px;}
+.ok{background:var(--ok-bg);color:var(--ok);border:1px solid var(--ok);}
+.warn{background:var(--warn-bg);color:var(--warn);border:1px solid var(--warn);}
+.pl{background:transparent;color:var(--plan);border:1px solid var(--plan);}
+
+/* SVG shared */
+.stagewrap{overflow-x:auto;}
+.stagewrap svg{display:block;min-width:900px;width:100%;height:auto;}
+svg text{font-family:inherit;fill:var(--ink);}
+.zone{fill:var(--zone);stroke:var(--zone-a);stroke-width:2;}
+.subz{fill:var(--subzone);stroke:var(--zone-b);stroke-width:1.5;}
+.zlabel{font-size:11px;font-weight:700;letter-spacing:.09em;fill:var(--ink2);}
+.zsub{font-size:10px;fill:var(--ink3);}
+.node{fill:var(--surface);stroke:var(--line);stroke-width:1.2;transition:stroke .3s,stroke-width .3s;}
+.frame{fill:none;stroke:var(--line);stroke-width:1.2;stroke-dasharray:5 4;transition:stroke .3s;}
+.ntitle{font-size:12px;font-weight:700;}
+.nsub{font-size:10.5px;fill:var(--ink2);}
+.nport{font-size:9.8px;fill:var(--ink3);font-family:ui-monospace,'Cascadia Mono',Menlo,Consolas,monospace;}
+.nctr{font-size:11.5px;font-weight:700;font-variant-numeric:tabular-nums;}
+.nok{fill:var(--ok);}
+.nwarn{fill:var(--warn);}
+.flow{fill:none;stroke-width:3;stroke-linejoin:round;opacity:.15;transition:opacity .3s;}
+.flow.on{opacity:1;}
+.flow.p1{stroke:var(--flow-1);}
+.flow.p2{stroke:var(--flow-2);}
+.flow.p3{stroke:var(--flow-3);}
+.flabel{font-size:10px;}
+.flabel.p1{fill:var(--flow-1);}
+.flabel.p2{fill:var(--flow-2);}
+.flabel.p3{fill:var(--flow-3);}
+.hot .node,.hot .frame{stroke:var(--flow-2);stroke-width:2.4;}
+.ghost{opacity:0;transition:opacity .35s;}
+.ghost.shown{opacity:1;}
+.schip{fill:var(--ok-bg);stroke:var(--ok);stroke-width:1;}
+.schip-w{fill:var(--warn-bg);stroke:var(--warn);stroke-width:1;}
+.schip-lbl{font-size:9.5px;}
+.anim-dot.p1{fill:var(--flow-1);}
+.anim-dot.p2{fill:var(--flow-2);}
+.anim-dot.p3{fill:var(--flow-3);}
+
+/* Storyboard player */
+.player{background:var(--surface);border:1px solid var(--line-soft);}
+.controls{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:10px 14px;
+  border-bottom:1px solid var(--line-soft);}
+.controls button{font:inherit;font-weight:700;font-size:13.5px;background:var(--surface);
+  color:var(--ink);border:1px solid var(--line);padding:6px 13px;cursor:pointer;border-radius:2px;}
+.controls button:hover{border-color:var(--ink2);}
+.controls button:focus-visible{outline:2px solid var(--flow-3);outline-offset:2px;}
+.stepnum{font-size:13px;color:var(--ink3);min-width:76px;text-align:center;
+  font-variant-numeric:tabular-nums;}
+.dots{display:flex;flex-wrap:wrap;gap:5px;padding:8px 14px;}
+.dots button{width:22px;height:8px;padding:0;border:none;background:var(--line-soft);
+  cursor:pointer;border-radius:1px;}
+.dots button[aria-current="true"]{background:var(--flow-2);}
+.dots button:focus-visible{outline:2px solid var(--flow-3);}
+.caption{padding:13px 18px 17px;border-top:1px solid var(--line-soft);min-height:94px;}
+.caption .ct{font-weight:700;font-size:15.5px;margin:0 0 5px;}
+.caption .cb{font-size:13.5px;color:var(--ink2);margin:0;max-width:100ch;}
+.legendband{background:var(--band);border-top:1px solid var(--line-soft);display:flex;
+  flex-wrap:wrap;gap:8px 22px;padding:10px 16px;font-size:12.5px;color:var(--ink2);}
+.legendband .sw{display:inline-block;width:24px;height:9px;margin-right:7px;vertical-align:middle;}
+footer{padding:16px 0 26px;font-size:12.5px;color:var(--ink3);}
+
+@media(prefers-reduced-motion:reduce){.flow,.ghost,.node,.frame{transition:none;}}
+</style>
+</head>
+<body>
+
+<header><div class="shell">
+  <div class="mast-row">
+    <div>
+      <h1>AAP Multi-Site Failover — EDA-Driven Active/Passive</h1>
+      <p class="sub">Red Hat Ansible Automation Platform 2.6 on two independent OpenShift clusters, using Event-Driven Ansible to detect PostgreSQL primary/standby role changes and automatically scale the AAP stack up or down within ~1–2 minutes.</p>
+      <div class="meta">
+        <span>AAP 2.6 · stable-2.6</span>
+        <span>OCP v4.16 / v4.17</span>
+        <span>PostgreSQL v13+</span>
+        <span>Pattern: active / standby (POC)</span>
+        <span>Failover time: ~1–2 min</span>
+      </div>
+    </div>
+    <button class="tbtn" id="theme-toggle" aria-label="Toggle colour theme">Toggle theme</button>
+  </div>
+</div></header>
+
+<main class="shell">
+
+<!-- ═══════════════════════════════════════════════════════ LOGICAL VIEW -->
+<section id="logical">
+<h2 class="sec-h">Logical view</h2>
+<div class="logical">
+
+  <div class="tier">
+    <p class="tlabel">Automation consumers</p>
+    <div class="tcards">
+      <div class="card">
+        <p class="cname">AAP Gateway</p>
+        <p class="cdesc">Ingress to Controller, Hub, EDA</p>
+        <p class="cport">HTTPS 443 · route_tls: Edge</p>
+        <span class="chip ok">Active on primary site</span>
+      </div>
+      <div class="card idle">
+        <p class="cname">AAP Gateway (standby)</p>
+        <p class="cdesc">Pre-deployed, idle until failover</p>
+        <p class="cport">idle_aap: true → 0 replicas</p>
+        <span class="chip pl">Idle on standby site</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="tier">
+    <p class="tlabel">AAP application layer — both sites</p>
+    <div class="tcards">
+      <div class="card">
+        <p class="cname">Automation Controller</p>
+        <p class="cdesc">Runs playbooks, job templates</p>
+        <p class="cport">aap.ansible.com/v1alpha1</p>
+      </div>
+      <div class="card">
+        <p class="cname">Automation Hub</p>
+        <p class="cdesc">Content store — S3 / Azure / NFS</p>
+        <p class="cport">automationhub.ansible.com/v1beta1</p>
+      </div>
+      <div class="card">
+        <p class="cname">Automation Decisions (EDA)</p>
+        <p class="cdesc">Hosts rulebook activations</p>
+        <p class="cport">eda.ansible.com/v1alpha1</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="tier mgmt">
+    <p class="tlabel">Decision engine — EDA rulebooks (per site)</p>
+    <div class="tcards">
+      <div class="card">
+        <p class="cname">EDA Event Stream</p>
+        <p class="cdesc">Receives webhook from CronJob</p>
+        <p class="cport">HTTPS · Bearer token auth</p>
+      </div>
+      <div class="card">
+        <p class="cname">Rulebook Activation</p>
+        <p class="cdesc">in_recovery == false → scale UP<br>in_recovery == true &nbsp;→ scale DOWN</p>
+        <p class="cport">run_job_template</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="tier mgmt">
+    <p class="tlabel">Monitoring — PostgreSQL role detection (per site)</p>
+    <div class="tcards">
+      <div class="card">
+        <p class="cname">Postgres Check CronJob</p>
+        <p class="cdesc">Polls pg_is_in_recovery() every minute</p>
+        <p class="cport">schedule: * * * * * · image: quay.io/chrhamme/postgres-check:v3</p>
+      </div>
+      <div class="card">
+        <p class="cname">PostgreSQL (external)</p>
+        <p class="cdesc">Primary or standby replica</p>
+        <p class="cport">port 5432 · v13+ · streaming replication</p>
+      </div>
+    </div>
+  </div>
+
+</div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════ SCHEMATIC -->
+<section id="schematic">
+<h2 class="sec-h">Schematic view — deployment topology</h2>
+<div class="stagewrap">
+<svg viewBox="0 0 1200 580" role="img" aria-label="Deployment topology schematic">
+
+  <!-- Site 1 zone -->
+  <rect class="zone" x="10" y="28" width="522" height="532"/>
+  <text class="zlabel" x="24" y="48">SITE 1 — ACTIVE</text>
+  <text class="zsub" x="24" y="62">OpenShift v4.16/v4.17 · AAP 2.6 operator</text>
+
+  <!-- Site 1 OCP subzone -->
+  <rect class="subz" x="22" y="68" width="498" height="348"/>
+  <text class="zlabel" x="36" y="86" style="font-size:10px;letter-spacing:.07em">OPENSHIFT CLUSTER 1</text>
+
+  <!-- Site 1 components -->
+  <g id="s1-cron"><rect class="node" x="38" y="98" width="148" height="76"/>
+    <text class="ntitle" x="48" y="116">Postgres Check</text>
+    <text class="nsub" x="48" y="131">CronJob</text>
+    <text class="nport" x="48" y="146">* * * * *  (every 1 min)</text>
+    <text class="nport" x="48" y="160">pg_is_in_recovery()</text></g>
+
+  <g id="s1-eda"><rect class="node" x="38" y="204" width="148" height="76"/>
+    <text class="ntitle" x="48" y="222">EDA Event Stream</text>
+    <text class="nsub" x="48" y="237">site1 webhook</text>
+    <text class="nport" x="48" y="252">HTTPS · Bearer token</text>
+    <text class="nport" x="48" y="266">ansible.eda.webhook</text></g>
+
+  <g id="s1-rule"><rect class="node" x="238" y="98" width="158" height="76"/>
+    <text class="ntitle" x="248" y="116">Rulebook</text>
+    <text class="ntitle" x="248" y="131">Activation</text>
+    <text class="nsub" x="248" y="147">gateway_pg_monitor</text>
+    <text class="nport" x="248" y="162">_rulebook_site1.yml</text></g>
+
+  <g id="s1-ctrl"><rect class="node" x="238" y="204" width="158" height="76"/>
+    <text class="ntitle" x="248" y="222">Automation</text>
+    <text class="ntitle" x="248" y="237">Controller</text>
+    <text class="nsub" x="248" y="253">runs scale templates</text>
+    <text class="nport" x="248" y="268">redhat.openshift.k8s</text></g>
+
+  <!-- Site 1 AAP CRs group -->
+  <rect class="frame" x="422" y="93" width="88" height="318"/>
+  <text class="ntitle" x="432" y="112" style="font-size:10.5px">AAP Stack</text>
+  <text class="nsub" x="432" y="127" style="font-size:9.5px">4 Custom Resources</text>
+  <text class="nport" x="432" y="145">Gateway CR</text>
+  <text class="nport" x="432" y="163">Controller CR</text>
+  <text class="nport" x="432" y="181">Hub CR</text>
+  <text class="nport" x="432" y="199">EDA CR</text>
+  <text class="nsub" x="432" y="230" style="font-size:9px">idle_aap: false</text>
+  <text class="nok" x="432" y="248" style="font-size:9.5px;font-weight:700">● ACTIVE</text>
+
+  <!-- Site 1 ext PG subzone -->
+  <rect class="subz" x="22" y="428" width="498" height="122"/>
+  <text class="zlabel" x="36" y="446" style="font-size:10px;letter-spacing:.07em">EXTERNAL POSTGRESQL</text>
+
+  <g id="s1-pg"><rect class="node" x="38" y="456" width="155" height="76"/>
+    <text class="ntitle" x="48" y="474">PostgreSQL</text>
+    <text class="nsub" x="48" y="489">v13+ · external cluster</text>
+    <text class="nport" x="48" y="504">port 5432</text>
+    <text class="nok" x="48" y="520" style="font-size:10px;font-weight:700">● PRIMARY</text></g>
+
+  <!-- Site 1 internal flows (schematic, static) -->
+  <!-- monitoring: CronJob ↔ PG, route left margin -->
+  <path class="flow p3 on" d="M 112,174 H 20 V 456 H 38" style="opacity:.7"/>
+  <!-- cron → EDA (webhook POST) -->
+  <path class="flow p1 on" d="M 112,174 V 204" style="opacity:.7"/>
+  <!-- EDA → Rulebook (event eval) -->
+  <path class="flow p2 on" d="M 186,242 H 213 V 136 H 238" style="opacity:.7"/>
+  <!-- Rulebook → Controller -->
+  <path class="flow p2 on" d="M 317,174 V 204" style="opacity:.7"/>
+  <!-- Controller → AAP CRs -->
+  <path class="flow p2 on" d="M 396,242 H 408 V 253 H 422" style="opacity:.7"/>
+
+  <!-- flow labels (schematic) -->
+  <text class="flabel p3" x="22" y="310" transform="rotate(-90,22,310)">PG monitoring</text>
+  <text class="flabel p1" x="118" y="192">POST webhook</text>
+  <text class="flabel p2" x="190" y="175">event</text>
+  <text class="flabel p2" x="396" y="248">k8s patch</text>
+
+  <!-- ─── Site 2 zone ─── -->
+  <rect class="zone" x="668" y="28" width="522" height="532"/>
+  <text class="zlabel" x="682" y="48">SITE 2 — STANDBY</text>
+  <text class="zsub" x="682" y="62">OpenShift v4.16/v4.17 · AAP 2.6 operator</text>
+
+  <rect class="subz" x="680" y="68" width="498" height="348"/>
+  <text class="zlabel" x="694" y="86" style="font-size:10px;letter-spacing:.07em">OPENSHIFT CLUSTER 2</text>
+
+  <!-- Site 2 monitoring (active even in standby) -->
+  <g id="s2-cron"><rect class="node" x="696" y="98" width="148" height="76"/>
+    <text class="ntitle" x="706" y="116">Postgres Check</text>
+    <text class="nsub" x="706" y="131">CronJob</text>
+    <text class="nport" x="706" y="146">* * * * *  (every 1 min)</text>
+    <text class="nport" x="706" y="160">pg_is_in_recovery()</text></g>
+
+  <g id="s2-eda"><rect class="node" x="696" y="204" width="148" height="76"/>
+    <text class="ntitle" x="706" y="222">EDA Event Stream</text>
+    <text class="nsub" x="706" y="237">site2 webhook</text>
+    <text class="nport" x="706" y="252">HTTPS · Bearer token</text>
+    <text class="nport" x="706" y="266">ansible.eda.webhook</text></g>
+
+  <!-- Site 2 control layer (idle, dashed) -->
+  <g id="s2-rule"><rect class="frame" x="896" y="98" width="158" height="76"/>
+    <text class="ntitle" x="906" y="116">Rulebook</text>
+    <text class="ntitle" x="906" y="131">Activation</text>
+    <text class="nsub" x="906" y="147">gateway_pg_monitor</text>
+    <text class="nport" x="906" y="162">_rulebook_site2.yml</text></g>
+
+  <g id="s2-ctrl"><rect class="frame" x="896" y="204" width="158" height="76"/>
+    <text class="ntitle" x="906" y="222">Automation</text>
+    <text class="ntitle" x="906" y="237">Controller</text>
+    <text class="nsub" x="906" y="253">runs scale templates</text>
+    <text class="nport" x="906" y="268">redhat.openshift.k8s</text></g>
+
+  <!-- Site 2 AAP CRs group (idle, dashed) -->
+  <rect class="frame" x="1080" y="93" width="88" height="318"/>
+  <text class="ntitle" x="1090" y="112" style="font-size:10.5px">AAP Stack</text>
+  <text class="nsub" x="1090" y="127" style="font-size:9.5px">4 Custom Resources</text>
+  <text class="nport" x="1090" y="145">Gateway CR</text>
+  <text class="nport" x="1090" y="163">Controller CR</text>
+  <text class="nport" x="1090" y="181">Hub CR</text>
+  <text class="nport" x="1090" y="199">EDA CR</text>
+  <text class="nsub" x="1090" y="230" style="font-size:9px">idle_aap: true</text>
+  <text class="nwarn" x="1090" y="248" style="font-size:9.5px;font-weight:700">● IDLE</text>
+
+  <!-- Site 2 ext PG -->
+  <rect class="subz" x="680" y="428" width="498" height="122"/>
+  <text class="zlabel" x="694" y="446" style="font-size:10px;letter-spacing:.07em">EXTERNAL POSTGRESQL</text>
+
+  <g id="s2-pg"><rect class="node" x="696" y="456" width="155" height="76"/>
+    <text class="ntitle" x="706" y="474">PostgreSQL</text>
+    <text class="nsub" x="706" y="489">v13+ · external cluster</text>
+    <text class="nport" x="706" y="504">port 5432</text>
+    <text class="nwarn" x="706" y="520" style="font-size:10px;font-weight:700">● REPLICA</text></g>
+
+  <!-- Site 2 monitoring flows (active) -->
+  <path class="flow p3 on" d="M 770,174 H 678 V 456 H 696" style="opacity:.7"/>
+  <path class="flow p1 on" d="M 770,174 V 204" style="opacity:.7"/>
+
+  <!-- Site 2 control flows (dimmed, idle) -->
+  <path class="flow p2 on" d="M 844,242 H 871 V 136 H 896" style="opacity:.25"/>
+  <path class="flow p2 on" d="M 975,174 V 204" style="opacity:.25"/>
+  <path class="flow p2 on" d="M 1054,242 H 1066 V 253 H 1080" style="opacity:.25"/>
+
+  <!-- Inter-site: PG streaming replication -->
+  <path class="flow p3 on" d="M 193,494 H 696" style="opacity:.85"/>
+  <text class="flabel p3" x="420" y="488">streaming replication</text>
+
+  <!-- Schematic legend -->
+  <line x1="10" y1="575" x2="1190" y2="575" stroke="var(--line-soft)" stroke-width="1"/>
+  <rect x="10" y="558" width="18" height="8" fill="var(--flow-3)" rx="1"/>
+  <text x="33" y="567" style="font-size:11px;fill:var(--ink3)">Monitoring</text>
+  <rect x="130" y="558" width="18" height="8" fill="var(--flow-1)" rx="1"/>
+  <text x="153" y="567" style="font-size:11px;fill:var(--ink3)">Webhook POST</text>
+  <rect x="270" y="558" width="18" height="8" fill="var(--flow-2)" rx="1"/>
+  <text x="293" y="567" style="font-size:11px;fill:var(--ink3)">Control / scale</text>
+  <rect x="406" y="558" width="18" height="6" fill="none" stroke="var(--line)" stroke-width="1.2" stroke-dasharray="4 3"/>
+  <text x="429" y="567" style="font-size:11px;fill:var(--ink3)">Idle / standby component</text>
+
+</svg>
+</div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════ STORYBOARD -->
+<section id="detail">
+<h2 class="sec-h">Failover walkthrough — Site 2 takeover, step by step</h2>
+<div class="player">
+
+  <div class="controls">
+    <button id="btn-prev" aria-label="Previous step">&#9664; Prev</button>
+    <button id="btn-next" aria-label="Next step">Next &#9654;</button>
+    <button id="btn-play" aria-pressed="false" aria-label="Autoplay">&#9654; Play</button>
+    <button id="btn-link" aria-label="Copy a direct link to this step">Copy step link</button>
+    <span class="stepnum" id="stepnum">Step 1 / 8</span>
+  </div>
+  <div class="dots" id="stepdots" role="group" aria-label="Steps"></div>
+
+  <div class="stagewrap">
+  <svg id="stage" viewBox="0 0 1240 530" role="img" aria-label="Failover scenario stage">
+
+    <!-- Zone background bands -->
+    <rect x="0" y="52" width="1240" height="117" fill="var(--zone)" opacity=".65"/>
+    <rect x="0" y="348" width="1240" height="117" fill="var(--zone)" opacity=".65"/>
+
+    <!-- Zone labels (update with counters) -->
+    <text class="zlabel" x="12" y="70">SITE 1</text>
+    <text id="c-s1status" class="zlabel nok" x="80" y="70">— ACTIVE</text>
+    <text class="zlabel" x="12" y="365">SITE 2</text>
+    <text id="c-s2status" class="zlabel nwarn" x="80" y="365">— STANDBY</text>
+
+    <!-- ── Site 1 row ── -->
+    <g id="b-pg1">
+      <rect class="node" x="15" y="77" width="158" height="93"/>
+      <text class="ntitle" x="25" y="96">PostgreSQL</text>
+      <text class="nsub" x="25" y="111">external · v13+</text>
+      <text class="nport" x="25" y="126">port 5432</text>
+      <text class="nctr nok" id="c-pg1role" x="25" y="147">PRIMARY</text>
+    </g>
+
+    <g id="b-cron1">
+      <rect class="node" x="198" y="77" width="158" height="93"/>
+      <text class="ntitle" x="208" y="96">Postgres Check</text>
+      <text class="nsub" x="208" y="111">CronJob</text>
+      <text class="nport" x="208" y="126">schedule: * * * * *</text>
+      <text class="nport" x="208" y="141">pg_is_in_recovery()</text>
+      <text class="nsub" x="208" y="158">quay.io/chrhamme/postgres-check:v3</text>
+    </g>
+
+    <g id="b-eda1">
+      <rect class="node" x="381" y="77" width="158" height="93"/>
+      <text class="ntitle" x="391" y="96">EDA Event Stream</text>
+      <text class="nsub" x="391" y="111">site1 webhook</text>
+      <text class="nport" x="391" y="126">HTTPS · Bearer token</text>
+      <text class="nport" x="391" y="141">ansible.eda.webhook</text>
+    </g>
+
+    <g id="b-rule1">
+      <rect class="node" x="564" y="77" width="168" height="93"/>
+      <text class="ntitle" x="574" y="96">Rulebook Activation</text>
+      <text class="nsub" x="574" y="111">gateway_pg_monitor</text>
+      <text class="nport" x="574" y="126">_rulebook_site1.yml</text>
+      <text class="nsub" x="574" y="143">in_recovery==true → scale DOWN</text>
+    </g>
+
+    <!-- ── Automation Controller (shared, center) ── -->
+    <g id="b-ctrl">
+      <rect class="node" x="780" y="198" width="182" height="128"/>
+      <text class="ntitle" x="790" y="217">Automation Controller</text>
+      <text class="nsub" x="790" y="232">runs scale job templates</text>
+      <text class="nport" x="790" y="247">scale-aap-gateway.yml</text>
+      <text class="nport" x="790" y="262">redhat.openshift.k8s</text>
+      <text class="nsub" x="790" y="279">patches idle_aap field</text>
+      <text class="nsub" x="790" y="294">on 4 CRs per site</text>
+    </g>
+
+    <!-- ── AAP Stack Site 1 ── -->
+    <g id="b-aap1">
+      <rect class="node" x="992" y="65" width="233" height="164"/>
+      <text class="ntitle" x="1002" y="84">AAP Stack — Site 1</text>
+      <text class="nport" x="1002" y="100">AnsibleAutomationPlatform CR</text>
+      <text class="nport" x="1002" y="115">AutomationController CR</text>
+      <text class="nport" x="1002" y="130">AutomationHub CR</text>
+      <text class="nport" x="1002" y="145">EDA CR</text>
+      <text class="nsub" x="1002" y="163">idle_aap / idle_deployment</text>
+      <text class="nctr" id="c-s1pods" x="1002" y="182">4/4 Running</text>
+    </g>
+    <!-- ghost: idle indicator for site 1 -->
+    <g id="g-s1idle" class="ghost">
+      <rect class="schip-w" x="1002" y="190" width="58" height="16"/>
+      <text class="schip-lbl nwarn" x="1007" y="202" style="font-weight:700">Idle</text>
+    </g>
+
+    <!-- ── Site 2 row ── -->
+    <g id="b-pg2">
+      <rect class="node" x="15" y="362" width="158" height="93"/>
+      <text class="ntitle" x="25" y="381">PostgreSQL</text>
+      <text class="nsub" x="25" y="396">external · v13+</text>
+      <text class="nport" x="25" y="411">port 5432</text>
+      <text class="nctr nwarn" id="c-pg2role" x="25" y="432">REPLICA</text>
+    </g>
+
+    <g id="b-cron2">
+      <rect class="node" x="198" y="362" width="158" height="93"/>
+      <text class="ntitle" x="208" y="381">Postgres Check</text>
+      <text class="nsub" x="208" y="396">CronJob</text>
+      <text class="nport" x="208" y="411">schedule: * * * * *</text>
+      <text class="nport" x="208" y="426">pg_is_in_recovery()</text>
+      <text class="nsub" x="208" y="443">quay.io/chrhamme/postgres-check:v3</text>
+    </g>
+
+    <g id="b-eda2">
+      <rect class="node" x="381" y="362" width="158" height="93"/>
+      <text class="ntitle" x="391" y="381">EDA Event Stream</text>
+      <text class="nsub" x="391" y="396">site2 webhook</text>
+      <text class="nport" x="391" y="411">HTTPS · Bearer token</text>
+      <text class="nport" x="391" y="426">ansible.eda.webhook</text>
+    </g>
+
+    <g id="b-rule2">
+      <rect class="node" x="564" y="362" width="168" height="93"/>
+      <text class="ntitle" x="574" y="381">Rulebook Activation</text>
+      <text class="nsub" x="574" y="396">gateway_pg_monitor</text>
+      <text class="nport" x="574" y="411">_rulebook_site2.yml</text>
+      <text class="nsub" x="574" y="428">in_recovery==false → scale UP</text>
+    </g>
+
+    <!-- ── AAP Stack Site 2 ── -->
+    <g id="b-aap2">
+      <rect class="node" x="992" y="306" width="233" height="164"/>
+      <text class="ntitle" x="1002" y="325">AAP Stack — Site 2</text>
+      <text class="nport" x="1002" y="341">AnsibleAutomationPlatform CR</text>
+      <text class="nport" x="1002" y="356">AutomationController CR</text>
+      <text class="nport" x="1002" y="371">AutomationHub CR</text>
+      <text class="nport" x="1002" y="386">EDA CR</text>
+      <text class="nsub" x="1002" y="404">idle_aap / idle_deployment</text>
+      <text class="nctr nwarn" id="c-s2pods" x="1002" y="423">0 replicas (idle)</text>
+    </g>
+    <!-- ghost: running indicator for site 2 -->
+    <g id="g-s2up" class="ghost">
+      <rect class="schip" x="1002" y="431" width="105" height="16"/>
+      <text class="schip-lbl nok" x="1007" y="443" style="font-weight:700">4/4 Running</text>
+    </g>
+
+    <!-- ══ Flow paths ══ -->
+    <!-- Monitoring plane (p3 / blue) -->
+    <path class="flow p3" id="f-qry1" d="M 173,123 H 198"/>
+    <path class="flow p1" id="f-post1" d="M 356,123 H 381"/>
+    <path class="flow p2" id="f-eval1" d="M 539,123 H 564"/>
+    <!-- rule1 → ctrl: right from 732, gutter x=750, down to y=257, right to ctrl left 780 -->
+    <path class="flow p2" id="f-job1" d="M 732,123 H 750 V 257 H 780"/>
+    <!-- ctrl → aap1: right from 962, gutter x=970, up to y=130, right to aap1 left 992 -->
+    <path class="flow p2" id="f-patch1" d="M 962,257 H 970 V 130 H 992"/>
+
+    <path class="flow p3" id="f-qry2" d="M 173,408 H 198"/>
+    <path class="flow p1" id="f-post2" d="M 356,408 H 381"/>
+    <path class="flow p2" id="f-eval2" d="M 539,408 H 564"/>
+    <!-- rule2 → ctrl: gutter x=758, up to y=271 -->
+    <path class="flow p2" id="f-job2" d="M 732,408 H 758 V 271 H 780"/>
+    <!-- ctrl → aap2: gutter x=978, down to y=389 -->
+    <path class="flow p2" id="f-patch2" d="M 962,271 H 978 V 389 H 992"/>
+
+    <!-- PG replication (p3): route along left margin x=6 -->
+    <path class="flow p3" id="f-repl" d="M 94,170 H 6 V 362 H 94"/>
+
+    <!-- Flow labels (sit beside paths, always visible) -->
+    <text class="flabel p3" x="178" y="117">query</text>
+    <text class="flabel p1" x="361" y="117">POST</text>
+    <text class="flabel p2" x="544" y="117">event</text>
+    <text class="flabel p3" x="178" y="402">query</text>
+    <text class="flabel p1" x="361" y="402">POST</text>
+    <text class="flabel p2" x="544" y="402">event</text>
+    <text class="flabel p3" x="9" y="268" transform="rotate(-90,9,268)">PG replication</text>
+
+  </svg>
+  </div>
+
+  <div class="caption" aria-live="polite">
+    <p class="ct" id="cap-title"></p>
+    <p class="cb" id="cap-body"></p>
+  </div>
+
+  <div class="legendband">
+    <span><span class="sw" style="background:var(--flow-3)"></span>Monitoring — pg_is_in_recovery()</span>
+    <span><span class="sw" style="background:var(--flow-1)"></span>Webhook POST — {"in_recovery": T/F}</span>
+    <span><span class="sw" style="background:var(--flow-2)"></span>Control — run_job_template / k8s patch</span>
+  </div>
+</div>
+</section>
+
+</main>
+
+<footer><div class="shell">
+  AAP 2.6 · EDA-driven active/passive failover POC · failover time ~1–2 min ·
+  steps are absolute state, deep-linkable as <span class="mono">#step-N</span>
+</div></footer>
+
+<script>
+(function(){
+'use strict';
+var $ = function(id){ return document.getElementById(id); };
+var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+var GHOSTS = ['g-s1idle','g-s2up'];
+var HOT_IDS = ['b-pg1','b-cron1','b-eda1','b-rule1','b-ctrl','b-aap1',
+               'b-pg2','b-cron2','b-eda2','b-rule2','b-aap2'];
+
+var STEPS = [
+  { t:'Normal operation — Site 1 active, Site 2 standby',
+    b:'Site 1 PostgreSQL is PRIMARY; its full AAP stack (Gateway, Controller, Hub, EDA CRs) is running. Site 2 PostgreSQL is a streaming replica; its AAP CRs are all set idle_aap: true (0 replicas). Both CronJobs poll pg_is_in_recovery() every minute.',
+    hot:['b-pg1','b-cron1','b-pg2','b-cron2'],
+    flows:[['f-qry1',false],['f-qry2',false],['f-repl',false]],
+    pg1role:'PRIMARY', pg2role:'REPLICA', s1pods:'4/4 Running', s2pods:'0 replicas (idle)',
+    s1st:'— ACTIVE', s2st:'— STANDBY', ghosts:[] },
+
+  { t:'Database switchover triggered',
+    b:'An operator promotes Site 2 PostgreSQL via EDB TPA (tpaexec switchover). Site 2 PG becomes PRIMARY; Site 1 PG becomes a streaming replica. Replication direction reverses. The AAP application layer has not yet reacted — it responds on the next CronJob poll (≤1 minute).',
+    hot:['b-pg1','b-pg2'],
+    flows:[['f-repl',true]],
+    pg1role:'REPLICA', pg2role:'PRIMARY', s1pods:'4/4 Running', s2pods:'0 replicas (idle)',
+    s1st:'— ACTIVE (stale)', s2st:'— STANDBY (promoted)', ghosts:[] },
+
+  { t:'Site 1 CronJob: in_recovery = true',
+    b:'The Site 1 CronJob fires on its 1-minute schedule. It connects to the local PostgreSQL and runs SELECT pg_is_in_recovery() → true. It POSTs {"in_recovery": true} to the Site 1 EDA Event Stream webhook endpoint with Bearer-token authentication.',
+    hot:['b-cron1','b-eda1'],
+    flows:[['f-qry1',false],['f-post1',false]],
+    pg1role:'REPLICA', pg2role:'PRIMARY', s1pods:'4/4 Running', s2pods:'0 replicas (idle)',
+    s1st:'— ACTIVE', s2st:'— STANDBY', ghosts:[] },
+
+  { t:'Site 2 CronJob: in_recovery = false',
+    b:'The Site 2 CronJob fires. SELECT pg_is_in_recovery() → false (this node is now primary). It POSTs {"in_recovery": false} to the Site 2 EDA Event Stream. Both payloads may arrive within seconds of each other.',
+    hot:['b-cron2','b-eda2'],
+    flows:[['f-qry2',false],['f-post2',false]],
+    pg1role:'REPLICA', pg2role:'PRIMARY', s1pods:'4/4 Running', s2pods:'0 replicas (idle)',
+    s1st:'— ACTIVE', s2st:'— STANDBY', ghosts:[] },
+
+  { t:'EDA rule fires: Scale down Site 1',
+    b:'The EDA Rulebook processes the Site 1 event payload. Rule "Scale down — Site 1" matches: event.payload.in_recovery == true. Action: run_job_template "Scale down Gateway Site 1 CR" in org "AAP-Multisite-Failover". The job is dispatched to Automation Controller.',
+    hot:['b-rule1','b-ctrl'],
+    flows:[['f-eval1',false],['f-job1',false]],
+    pg1role:'REPLICA', pg2role:'PRIMARY', s1pods:'4/4 Running', s2pods:'0 replicas (idle)',
+    s1st:'— ACTIVE', s2st:'— STANDBY', ghosts:[] },
+
+  { t:'EDA rule fires: Scale up Site 2',
+    b:'The Site 2 event triggers rule "Scale up — Site 2": event.payload.in_recovery == false. Action: run_job_template "Scale up Gateway Site 2 CR". Both scale jobs are now queued in the Automation Controller.',
+    hot:['b-rule2','b-ctrl'],
+    flows:[['f-eval2',false],['f-job2',false]],
+    pg1role:'REPLICA', pg2role:'PRIMARY', s1pods:'4/4 Running', s2pods:'0 replicas (idle)',
+    s1st:'— ACTIVE', s2st:'— STANDBY', ghosts:[] },
+
+  { t:'Controller patches all 4 CRs on both sites',
+    b:'scale-aap-gateway.yml runs via the redhat.openshift.k8s module. On Site 1 it sets idle_aap: true on AnsibleAutomationPlatform, AutomationController, AutomationHub, and EDA CRs (→ 0 replicas). On Site 2 it sets idle_aap: false on the same 4 CRs (→ scale up).',
+    hot:['b-ctrl','b-aap1','b-aap2'],
+    flows:[['f-patch1',false],['f-patch2',false]],
+    pg1role:'REPLICA', pg2role:'PRIMARY', s1pods:'scaling to 0…', s2pods:'scaling up…',
+    s1st:'— SCALING DOWN', s2st:'— SCALING UP', ghosts:['g-s1idle','g-s2up'] },
+
+  { t:'Failover complete — Site 2 active (~1–2 minutes)',
+    b:'Site 2 AAP reaches running state: controller-task 4/4 Running, controller-web 3/3 Running. Site 1 AAP is fully idle (0 replicas). Total application-layer failover time from DB switchover: ~1–2 minutes. Both CronJobs continue polling to maintain steady state.',
+    hot:['b-pg2','b-aap2'],
+    flows:[['f-repl',false],['f-qry1',false],['f-qry2',false]],
+    pg1role:'REPLICA', pg2role:'PRIMARY', s1pods:'0 replicas (idle)', s2pods:'4/4 Running',
+    s1st:'— STANDBY', s2st:'— ACTIVE', ghosts:['g-s1idle','g-s2up'] }
+];
+
+var cur = 0, playing = false, playTimer = null, initialized = false;
+var stage = $('stage'), dotLayer = null, animHandle = null, animDots = [];
+
+/* Build step dots */
+var dotsBox = $('stepdots');
+STEPS.forEach(function(s, i){
+  var b = document.createElement('button');
+  b.setAttribute('aria-label','Step '+(i+1)+': '+s.t);
+  b.addEventListener('click', function(){ stopPlay(); go(i); });
+  dotsBox.appendChild(b);
+});
+
+function clearDots(){
+  if(animHandle) cancelAnimationFrame(animHandle);
+  animHandle = null;
+  animDots.forEach(function(d){ d.el.remove(); });
+  animDots = [];
+}
+
+function startDots(specs){
+  clearDots();
+  if(reduced || !specs.length) return;
+  if(!dotLayer){
+    dotLayer = document.createElementNS('http://www.w3.org/2000/svg','g');
+    stage.appendChild(dotLayer);
+  }
+  specs.forEach(function(spec, fi){
+    var path = $(spec[0]); if(!path) return;
+    var len = path.getTotalLength();
+    var plane = path.classList.contains('p1') ? 'p1' : (path.classList.contains('p3') ? 'p3' : 'p2');
+    var n = Math.max(2, Math.min(4, Math.round(len/130)));
+    for(var k=0; k<n; k++){
+      var c = document.createElementNS('http://www.w3.org/2000/svg','circle');
+      c.setAttribute('class','anim-dot '+plane);
+      c.setAttribute('r','5');
+      dotLayer.appendChild(c);
+      animDots.push({el:c, path:path, len:len, rev:!!spec[1], off:(k/n)+fi*0.11, speed:90/len});
+    }
+  });
+  var last = performance.now();
+  function tick(now){
+    var dt = (now-last)/1000; last = now;
+    animDots.forEach(function(d){
+      d.off = (d.off + d.speed*dt) % 1;
+      var at = d.rev ? (1-d.off)*d.len : d.off*d.len;
+      var p = d.path.getPointAtLength(at);
+      d.el.setAttribute('cx',p.x);
+      d.el.setAttribute('cy',p.y);
+    });
+    animHandle = requestAnimationFrame(tick);
+  }
+  animHandle = requestAnimationFrame(tick);
+}
+
+function go(i){
+  cur = (i + STEPS.length) % STEPS.length;
+  var s = STEPS[cur];
+
+  /* Player UI */
+  $('stepnum').textContent = 'Step '+(cur+1)+' / '+STEPS.length;
+  $('cap-title').textContent = (cur+1)+'. '+s.t;
+  $('cap-body').textContent = s.b;
+
+  /* Step dots */
+  Array.prototype.forEach.call(dotsBox.children, function(d, di){
+    if(di===cur) d.setAttribute('aria-current','true');
+    else d.removeAttribute('aria-current');
+  });
+
+  /* Hot components */
+  HOT_IDS.forEach(function(id){ var el=$(id); if(el) el.classList.remove('hot'); });
+  (s.hot||[]).forEach(function(id){ var el=$(id); if(el) el.classList.add('hot'); });
+
+  /* Flows */
+  document.querySelectorAll('#stage .flow').forEach(function(p){ p.classList.remove('on'); });
+  (s.flows||[]).forEach(function(spec){ var p=$(spec[0]); if(p) p.classList.add('on'); });
+
+  /* Counters */
+  var r1 = $('c-pg1role'), r2 = $('c-pg2role');
+  if(r1){ r1.textContent = s.pg1role;
+    r1.setAttribute('class', s.pg1role==='PRIMARY' ? 'nctr nok' : 'nctr nwarn'); }
+  if(r2){ r2.textContent = s.pg2role;
+    r2.setAttribute('class', s.pg2role==='PRIMARY' ? 'nctr nok' : 'nctr nwarn'); }
+
+  var p1 = $('c-s1pods'), p2 = $('c-s2pods');
+  if(p1) p1.textContent = s.s1pods;
+  if(p2){ p2.textContent = s.s2pods;
+    p2.setAttribute('class', s.s2pods==='4/4 Running' ? 'nctr nok' : 'nctr nwarn'); }
+
+  var sl1 = $('c-s1status'), sl2 = $('c-s2status');
+  if(sl1){ sl1.textContent = s.s1st;
+    sl1.setAttribute('class', s.s1st.indexOf('ACTIVE')!==-1 ? 'zlabel nok' : 'zlabel nwarn'); }
+  if(sl2){ sl2.textContent = s.s2st;
+    sl2.setAttribute('class', s.s2st.indexOf('ACTIVE')!==-1 ? 'zlabel nok' : 'zlabel nwarn'); }
+
+  /* Ghosts */
+  GHOSTS.forEach(function(id){
+    var el=$(id); if(el) el.classList.toggle('shown', (s.ghosts||[]).indexOf(id)!==-1);
+  });
+
+  /* Dots animation */
+  startDots(s.flows||[]);
+
+  /* Deep link */
+  if(initialized){
+    try{ history.replaceState(null,'','#step-'+(cur+1)); }catch(e){}
+  }
+}
+
+function stopPlay(){
+  playing = false;
+  if(playTimer) clearInterval(playTimer);
+  playTimer = null;
+  var b = $('btn-play');
+  b.setAttribute('aria-pressed','false');
+  b.textContent = '▶ Play';
+}
+
+$('btn-prev').addEventListener('click', function(){ stopPlay(); go(cur-1); });
+$('btn-next').addEventListener('click', function(){ stopPlay(); go(cur+1); });
+
+$('btn-play').addEventListener('click', function(){
+  if(playing){ stopPlay(); return; }
+  playing = true;
+  this.setAttribute('aria-pressed','true');
+  this.textContent = '⏸ Pause';
+  if(cur === STEPS.length-1) go(0);
+  playTimer = setInterval(function(){
+    if(cur === STEPS.length-1){ stopPlay(); return; }
+    go(cur+1);
+  }, 7000);
+});
+
+$('btn-link').addEventListener('click', function(){
+  var self = this;
+  var url = location.href.split('#')[0]+'#step-'+(cur+1);
+  try{ history.replaceState(null,'','#step-'+(cur+1)); }catch(e){}
+  function done(ok){
+    self.textContent = ok ? 'Copied' : 'Link in address bar';
+    setTimeout(function(){ self.textContent='Copy step link'; }, 1600);
+  }
+  function fallback(){
+    var ta=document.createElement('textarea');
+    ta.value=url; ta.style.position='fixed'; ta.style.opacity='0';
+    document.body.appendChild(ta); ta.select();
+    var ok=false; try{ ok=document.execCommand('copy'); }catch(e){}
+    ta.remove(); done(ok);
+  }
+  if(navigator.clipboard && window.isSecureContext){
+    navigator.clipboard.writeText(url).then(function(){ done(true); }, fallback);
+  } else { fallback(); }
+});
+
+document.addEventListener('keydown', function(e){
+  if(e.key!=='ArrowLeft' && e.key!=='ArrowRight') return;
+  if(e.altKey||e.ctrlKey||e.metaKey||e.shiftKey) return;
+  var t=e.target;
+  if(t && t.closest && t.closest('input,textarea,select,.stagewrap')) return;
+  var r = document.querySelector('.player').getBoundingClientRect();
+  if(r.bottom<80 || r.top>window.innerHeight-80) return;
+  e.preventDefault();
+  stopPlay();
+  go(e.key==='ArrowLeft' ? cur-1 : cur+1);
+});
+
+/* Theme toggle */
+$('theme-toggle').addEventListener('click', function(){
+  var html = document.documentElement;
+  var cur = html.getAttribute('data-theme');
+  if(!cur){
+    var dark = window.matchMedia('(prefers-color-scheme:dark)').matches;
+    html.setAttribute('data-theme', dark ? 'light' : 'dark');
+  } else {
+    html.setAttribute('data-theme', cur==='dark' ? 'light' : 'dark');
+  }
+});
+
+/* Hash deep-link */
+function applyHash(){
+  var m = /^#step-(\d+)$/.exec(location.hash);
+  if(!m) return;
+  var n = Math.min(STEPS.length, Math.max(1, parseInt(m[1],10)));
+  stopPlay(); go(n-1);
+  document.querySelector('.player').scrollIntoView();
+}
+
+go(0);
+initialized = true;
+applyHash();
+window.addEventListener('hashchange', applyHash);
+
+})();
+</script>
+</body>
+</html>

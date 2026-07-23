@@ -1,0 +1,951 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OpenShift as a HA/DR Solution for Ansible Automation Platform</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/theme/black.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/plugin/highlight/monokai.css">
+  <style>
+    :root {
+      --bg: #0F1114;
+      --surface: #1A1D23;
+      --border: #2D3139;
+      --text: #C9D1D9;
+      --text-muted: #8B949E;
+      --accent: #D94423;
+      --up: #3FB950;
+      --warn: #D29922;
+      --down: #8B949E;
+
+      --r-background-color: var(--bg);
+      --r-main-color: var(--text);
+      --r-heading-color: #E6EDF3;
+      --r-link-color: var(--accent);
+      --r-link-color-hover: #E5593A;
+      --r-selection-background-color: var(--accent);
+    }
+
+    .reveal {
+      font-family: 'IBM Plex Sans', system-ui, sans-serif;
+    }
+    .reveal .slides > section {
+      padding: 28px 44px;
+      box-sizing: border-box;
+    }
+
+    /* --- Type scale --- */
+    .reveal h1, .reveal h2, .reveal h3 {
+      font-family: 'IBM Plex Mono', monospace;
+      text-transform: none;
+      letter-spacing: -0.03em;
+    }
+    .reveal h1 {
+      font-size: 1.7em;
+      font-weight: 600;
+      margin: 0 0 8px;
+    }
+    .reveal h2 {
+      font-size: 1.2em;
+      font-weight: 600;
+      margin: 0 0 8px;
+      padding-bottom: 6px;
+      border-bottom: 1px solid var(--border);
+      text-align: left;
+    }
+    .reveal h3 {
+      font-size: 0.72em;
+      font-weight: 600;
+      color: var(--text);
+      margin: 0 0 4px;
+    }
+    .reveal p {
+      margin: 0 0 6px;
+    }
+    .reveal .lead {
+      color: var(--text-muted);
+      font-size: 0.6em;
+      margin: 0 0 12px;
+      text-align: left;
+    }
+    .reveal .small {
+      font-size: 0.5em;
+    }
+    .reveal .muted {
+      color: var(--text-muted);
+    }
+    .reveal .accent {
+      color: var(--accent);
+    }
+
+    /* --- Status dots --- */
+    .dot {
+      display: inline-block;
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      margin-right: 6px;
+      vertical-align: middle;
+      position: relative;
+      top: -1px;
+    }
+    .dot.up { background: var(--up); }
+    .dot.warn { background: var(--warn); }
+    .dot.down { background: var(--down); }
+    .dot.pulse {
+      animation: pulse 2s ease-in-out infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(63,185,80,0.5); }
+      50% { opacity: 0.7; box-shadow: 0 0 0 6px rgba(63,185,80,0); }
+    }
+
+    /* --- Panels (replaces cards) --- */
+    .panel-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      text-align: left;
+      margin-top: 8px;
+    }
+    .panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 2px;
+      padding: 10px 14px;
+    }
+    .panel h3 {
+      margin: 0 0 3px;
+      font-family: 'IBM Plex Sans', sans-serif;
+      font-size: 0.62em;
+      font-weight: 600;
+    }
+    .panel p {
+      margin: 0;
+      font-size: 0.44em;
+      color: var(--text-muted);
+      line-height: 1.4;
+    }
+
+    /* --- Stat row --- */
+    .stat-row {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      margin: 12px 0;
+    }
+    .stat-block {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 2px;
+      padding: 12px 24px;
+      text-align: center;
+      min-width: 140px;
+    }
+    .stat-block .val {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 1.8em;
+      font-weight: 600;
+      color: #E6EDF3;
+      line-height: 1;
+    }
+    .stat-block .lbl {
+      font-size: 0.4em;
+      color: var(--text-muted);
+      margin-top: 4px;
+      line-height: 1.3;
+    }
+
+    /* --- Callout box --- */
+    .callout {
+      background: var(--surface);
+      border-left: 3px solid var(--accent);
+      border-radius: 0 2px 2px 0;
+      padding: 10px 16px;
+      margin: 10px auto;
+      max-width: 750px;
+      text-align: left;
+    }
+    .callout p {
+      margin: 0;
+      font-size: 0.5em;
+      line-height: 1.45;
+      color: var(--text);
+    }
+
+    /* --- Component list --- */
+    .item-list {
+      text-align: left;
+      margin: 6px auto;
+      max-width: 820px;
+    }
+    .item {
+      display: flex;
+      align-items: flex-start;
+      padding: 7px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .item:last-child { border-bottom: none; }
+    .item .text {
+      font-size: 0.44em;
+      line-height: 1.4;
+    }
+    .item .text strong {
+      font-family: 'IBM Plex Mono', monospace;
+      font-weight: 500;
+      color: #E6EDF3;
+      font-size: 1.05em;
+    }
+
+    /* --- Timeline / pipeline steps --- */
+    .steps {
+      text-align: left;
+      margin: 6px auto;
+      max-width: 820px;
+    }
+    .step {
+      display: flex;
+      align-items: flex-start;
+      padding: 6px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .step:last-child { border-bottom: none; }
+    .step-n {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.5em;
+      font-weight: 600;
+      color: var(--accent);
+      width: 22px;
+      flex-shrink: 0;
+      padding-top: 1px;
+    }
+    .step-body h3 {
+      margin: 0;
+      font-family: 'IBM Plex Sans', sans-serif;
+      font-size: 0.58em;
+      font-weight: 600;
+    }
+    .step-body span {
+      color: var(--text-muted);
+      font-weight: 400;
+    }
+    .step-body p {
+      margin: 2px 0 0;
+      font-size: 0.42em;
+      color: var(--text-muted);
+      line-height: 1.35;
+    }
+
+    /* --- Tables --- */
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.42em;
+      margin-top: 8px;
+      text-align: left;
+    }
+    .data-table th {
+      font-family: 'IBM Plex Mono', monospace;
+      font-weight: 500;
+      font-size: 0.95em;
+      padding: 6px 10px;
+      border-bottom: 2px solid var(--border);
+      color: var(--text-muted);
+    }
+    .data-table td {
+      padding: 5px 10px;
+      border-bottom: 1px solid var(--border);
+      vertical-align: top;
+    }
+    .data-table td strong {
+      color: #E6EDF3;
+    }
+    .data-table td.good {
+      color: var(--up);
+    }
+
+    /* --- Two-column layout --- */
+    .two-col {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      align-items: start;
+      text-align: left;
+    }
+    .two-col ul {
+      font-size: 0.46em;
+      line-height: 1.6;
+      margin: 4px 0;
+      padding-left: 1.1em;
+      color: var(--text);
+    }
+    .two-col li { margin-bottom: 2px; }
+
+    /* --- Inline labels --- */
+    .tag {
+      display: inline-block;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.44em;
+      font-weight: 500;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 2px;
+      padding: 2px 10px;
+      margin: 2px;
+      color: var(--text-muted);
+    }
+
+    /* --- Images --- */
+    .reveal section img {
+      border: none;
+      box-shadow: none;
+      background: none;
+    }
+    .arch-img {
+      max-height: 360px;
+      border-radius: 2px;
+      border: 1px solid var(--border);
+    }
+
+    /* --- Code --- */
+    .reveal code {
+      font-family: 'IBM Plex Mono', monospace;
+      background: var(--surface);
+      padding: 1px 6px;
+      border-radius: 2px;
+      font-size: 0.85em;
+      border: 1px solid var(--border);
+    }
+    .reveal pre {
+      margin: 6px 0;
+    }
+    .reveal pre code {
+      background: var(--surface);
+      padding: 10px 14px;
+      border-radius: 2px;
+      font-size: 0.4em;
+      line-height: 1.45;
+      border: 1px solid var(--border);
+    }
+
+    /* --- Site state blocks --- */
+    .site-state {
+      padding: 8px 14px;
+      border: 1px solid var(--border);
+      border-radius: 2px;
+      margin-bottom: 8px;
+      font-size: 0.44em;
+      line-height: 1.5;
+      background: var(--surface);
+    }
+    .site-state strong {
+      font-family: 'IBM Plex Mono', monospace;
+      font-weight: 500;
+    }
+    .site-state.active {
+      border-left: 3px solid var(--up);
+    }
+    .site-state.standby {
+      border-left: 3px solid var(--down);
+      opacity: 0.7;
+    }
+
+    /* --- Title slide special --- */
+    .title-indicator {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 18px;
+      margin: 18px 0 6px;
+    }
+    .title-indicator .site {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.5em;
+      color: var(--text-muted);
+    }
+    .title-indicator .site .dot { margin-right: 0; }
+    .title-indicator .divider {
+      font-size: 0.6em;
+      color: var(--border);
+    }
+
+    /* --- Reduced motion --- */
+    @media (prefers-reduced-motion: reduce) {
+      .dot.pulse { animation: none; }
+    }
+  </style>
+</head>
+<body>
+<div class="reveal">
+<div class="slides">
+
+  <!-- TITLE -->
+  <section>
+    <h1 style="text-align:center; border:none; margin-bottom:4px;">OpenShift for HA/DR</h1>
+    <p style="text-align:center; font-family:'IBM Plex Mono',monospace; font-size:0.7em; color:var(--text-muted); font-weight:400; margin:0 0 4px;">
+      Ansible Automation Platform Multi-Site Failover
+    </p>
+    <div class="title-indicator">
+      <div class="site"><span class="dot up pulse"></span> Site 1 Active</div>
+      <div class="divider">&harr;</div>
+      <div class="site"><span class="dot down"></span> Site 2 Standby</div>
+    </div>
+    <div style="text-align:center; margin-top:14px;">
+      <span class="tag">Event-Driven Ansible</span>
+      <span class="tag">OpenShift</span>
+      <span class="tag">AAP 2.6</span>
+    </div>
+    <p style="text-align:center; font-size:0.5em; color:var(--text-muted); margin-top:16px;">
+      Automated disaster recovery with zero manual intervention
+    </p>
+  </section>
+
+  <!-- THE CHALLENGE -->
+  <section>
+    <h2>The Challenge</h2>
+    <p class="lead">Enterprise automation platforms must be resilient. Downtime in your automation layer cascades across your entire infrastructure.</p>
+    <div class="panel-grid">
+      <div class="panel">
+        <h3><span class="dot down"></span>Automation is Critical Infrastructure</h3>
+        <p>When AAP goes down, patching stops, compliance drifts, provisioning halts, and incident response is delayed.</p>
+      </div>
+      <div class="panel">
+        <h3><span class="dot down"></span>Manual Failover is Too Slow</h3>
+        <p>Traditional DR requires runbooks, human decisions, and manual steps &mdash; adding minutes or hours to recovery time.</p>
+      </div>
+      <div class="panel">
+        <h3><span class="dot warn"></span>Complexity Breeds Errors</h3>
+        <p>Multi-component platforms (Controller, Hub, EDA, Gateway) require coordinated failover across all services.</p>
+      </div>
+      <div class="panel">
+        <h3><span class="dot warn"></span>Geographic Redundancy Required</h3>
+        <p>Regulatory and business requirements often mandate geographically separated disaster recovery sites.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- SOLUTION OVERVIEW -->
+  <section>
+    <h2>The Solution</h2>
+    <p class="lead">Fully automated, event-driven multi-site failover for AAP on OpenShift</p>
+    <div class="stat-row">
+      <div class="stat-block">
+        <div class="val">2</div>
+        <div class="lbl">OpenShift Clusters<br>Active / Standby</div>
+      </div>
+      <div class="stat-block">
+        <div class="val">&lt;2<span style="font-size:0.5em; font-weight:400;">min</span></div>
+        <div class="lbl">Application-Layer<br>Failover Time</div>
+      </div>
+      <div class="stat-block">
+        <div class="val">0</div>
+        <div class="lbl">Manual Steps<br>Required</div>
+      </div>
+      <div class="stat-block">
+        <div class="val">4</div>
+        <div class="lbl">AAP Components<br>Orchestrated</div>
+      </div>
+    </div>
+    <div class="callout">
+      <p>OpenShift's operator-based lifecycle management combined with Event-Driven Ansible creates a self-healing automation platform that reacts to database role changes in real time.</p>
+    </div>
+  </section>
+
+  <!-- ARCHITECTURE OVERVIEW -->
+  <section>
+    <h2>Architecture Overview</h2>
+    <img src="images/architecture.png" alt="Architecture Diagram" class="arch-img" style="max-height:420px;">
+    <p class="small muted" style="margin-top:6px; text-align:left;">Central AAP instance with EDA orchestrates two OpenShift clusters backed by a replicated EDB PostgreSQL database cluster</p>
+  </section>
+
+  <!-- REFERENCE ARCHITECTURE -->
+  <section>
+    <h2>Reference Architecture</h2>
+    <p class="lead">Interactive diagram with step-by-step failover walkthrough</p>
+    <div style="width:100%; height:380px; border-radius:2px; overflow:hidden; border:1px solid var(--border);">
+      <iframe src="refarch.html" style="width:100%; height:100%; border:none; background:var(--bg);" loading="lazy"></iframe>
+    </div>
+    <p class="small muted" style="margin-top:6px; text-align:left;">
+      <a href="refarch.html" target="_blank" style="color:var(--accent);">Open full reference architecture &rarr;</a>
+    </p>
+  </section>
+
+  <!-- WHY OPENSHIFT -->
+  <section>
+    <h2>Why OpenShift for AAP HA/DR</h2>
+    <div class="item-list">
+      <div class="item">
+        <div class="text">
+          <strong><span class="dot up"></span>Operator Lifecycle Management</strong><br>
+          The AAP Operator handles the full lifecycle of Controller, Hub, EDA, and Gateway. A single CR patch scales the entire stack up or down &mdash; no manual pod management needed.
+        </div>
+      </div>
+      <div class="item">
+        <div class="text">
+          <strong><span class="dot up"></span>Declarative State via Custom Resources</strong><br>
+          OpenShift CRs define the desired state. Setting <code>idle_aap: true</code> scales all pods to zero; <code>idle_aap: false</code> brings them back. The operator reconciles automatically.
+        </div>
+      </div>
+      <div class="item">
+        <div class="text">
+          <strong><span class="dot up"></span>Multi-Cluster Consistency</strong><br>
+          Identical operator subscriptions and CR templates across sites ensure both clusters run the exact same AAP configuration, eliminating drift.
+        </div>
+      </div>
+      <div class="item">
+        <div class="text">
+          <strong><span class="dot up"></span>Built-in Secrets Management</strong><br>
+          Kubernetes Secrets store database credentials, encryption keys, and storage credentials. Each site manages its own secrets with identical structures.
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- OPERATOR-DRIVEN SCALING -->
+  <section>
+    <h2>Operator-Driven Scaling</h2>
+    <p class="lead">One API call controls the entire AAP stack</p>
+    <div class="two-col">
+      <div>
+        <h3><span class="dot down"></span> Scale Down (Idle Standby)</h3>
+        <pre><code class="yaml">apiVersion: aap.ansible.com/v1alpha1
+kind: AnsibleAutomationPlatform
+metadata:
+  name: aap-instance
+spec:
+  idle_aap: true</code></pre>
+        <p class="small muted" style="margin-top:6px;">All AAP pods scale to 0 replicas.<br>Resources freed on the standby cluster.</p>
+      </div>
+      <div>
+        <h3><span class="dot up"></span> Scale Up (Activate)</h3>
+        <pre><code class="yaml">apiVersion: aap.ansible.com/v1alpha1
+kind: AnsibleAutomationPlatform
+metadata:
+  name: aap-instance
+spec:
+  idle_aap: false</code></pre>
+        <p class="small muted" style="margin-top:6px;">Operator reconciles and brings<br>all components back online.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- FAILOVER FLOW -->
+  <section>
+    <h2>Failover Flow</h2>
+    <p class="lead">Symmetric monitoring on both sites: CronJob &rarr; Webhook &rarr; EDA Event Stream &rarr; Rulebook &rarr; Scale Up/Down</p>
+    <img src="images/diagram.png" alt="Failover Flow Diagram" class="arch-img" style="max-height:360px;">
+  </section>
+
+  <!-- 5-STAGE PIPELINE -->
+  <section>
+    <h2>The 5-Stage Pipeline</h2>
+    <div class="steps">
+      <div class="step">
+        <div class="step-n">01</div>
+        <div class="step-body">
+          <h3>Monitor <span>&mdash; Python CronJob</span></h3>
+          <p>A containerized Python script runs every 60 seconds on each site, querying <code>pg_is_in_recovery()</code> on the local PostgreSQL instance.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-n">02</div>
+        <div class="step-body">
+          <h3>Report <span>&mdash; Webhook POST</span></h3>
+          <p>The script POSTs <code>{"in_recovery": true/false}</code> to the EDA Event Stream webhook endpoint with Bearer token authentication.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-n">03</div>
+        <div class="step-body">
+          <h3>Ingest <span>&mdash; EDA Event Stream</span></h3>
+          <p>EDA receives the webhook payload and routes it to the corresponding site's Rulebook Activation.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-n">04</div>
+        <div class="step-body">
+          <h3>Decide <span>&mdash; EDA Rulebook</span></h3>
+          <p>The rulebook evaluates the payload: <code>in_recovery == false</code> means primary (scale up), <code>true</code> means standby (scale down).</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-n">05</div>
+        <div class="step-body">
+          <h3>Execute <span>&mdash; Controller Job Template</span></h3>
+          <p>EDA triggers a Controller job template that patches the OpenShift CRs, scaling the AAP stack up or down via the operator.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- EDA RULEBOOK -->
+  <section>
+    <h2>EDA Rulebook Logic</h2>
+    <p class="lead">Simple, deterministic rules drive the failover decision</p>
+    <pre><code class="yaml">---
+- name: Listen for Postgres Status Events
+  hosts: all
+  sources:
+    - ansible.eda.webhook:
+        host: 0.0.0.0
+        port: 5000
+  rules:
+    - name: Scale Up AAP - DB is Primary
+      condition: event.payload.in_recovery == false
+      action:
+        run_job_template:
+          name: "Scale up Gateway Site 1 CR"
+          organization: "AAP-Multisite-Failover"
+
+    - name: Scale Down AAP - DB is Standby
+      condition: event.payload.in_recovery == true
+      action:
+        run_job_template:
+          name: "Scale down Gateway Site 1 CR"
+          organization: "AAP-Multisite-Failover"</code></pre>
+  </section>
+
+  <!-- COMPONENTS MANAGED -->
+  <section>
+    <h2>Components Orchestrated</h2>
+    <p class="lead">All four AAP services are scaled together as a coordinated unit</p>
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Component</th>
+          <th>API Group</th>
+          <th>Idle Field</th>
+          <th>Purpose</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Gateway</strong></td>
+          <td><code>aap.ansible.com/v1alpha1</code></td>
+          <td><code>idle_aap</code></td>
+          <td>Unified API entry point and authentication</td>
+        </tr>
+        <tr>
+          <td><strong>Controller</strong></td>
+          <td><code>automationcontroller.ansible.com/v1beta1</code></td>
+          <td><code>idle_deployment</code></td>
+          <td>Job execution engine and workflow orchestration</td>
+        </tr>
+        <tr>
+          <td><strong>Automation Hub</strong></td>
+          <td><code>automationhub.ansible.com/v1beta1</code></td>
+          <td><code>idle_deployment</code></td>
+          <td>Content management and collection distribution</td>
+        </tr>
+        <tr>
+          <td><strong>EDA</strong></td>
+          <td><code>eda.ansible.com/v1alpha1</code></td>
+          <td><code>idle_deployment</code></td>
+          <td>Event-driven rulebook processing</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- DATABASE LAYER -->
+  <section>
+    <h2>Database Layer</h2>
+    <p class="lead">External PostgreSQL with streaming replication across sites</p>
+    <div class="two-col">
+      <div>
+        <h3>Architecture</h3>
+        <ul>
+          <li>EDB Postgres Advanced Server v13</li>
+          <li>6-node cluster managed by <strong>Patroni</strong></li>
+          <li>Deployed via <strong>TPA</strong> (Trusted Postgres Architect)</li>
+          <li>Streaming replication between sites</li>
+          <li>4 databases:
+            <span class="tag" style="font-size:1.3em;">awx</span>
+            <span class="tag" style="font-size:1.3em;">eda</span>
+            <span class="tag" style="font-size:1.3em;">hub</span>
+            <span class="tag" style="font-size:1.3em;">gateway</span>
+          </li>
+        </ul>
+      </div>
+      <div>
+        <h3>Key Design Choice</h3>
+        <div class="callout" style="margin:0 0 8px 0;">
+          <p>Ansible does <strong>not</strong> manage database replication. It only <strong>reacts</strong> to the current database role. Any PostgreSQL HA solution (Patroni, pgpool, cloud-managed) can serve as the backend.</p>
+        </div>
+        <h3>Failover Trigger</h3>
+        <pre><code class="sql">SELECT pg_is_in_recovery();</code></pre>
+        <p class="small muted">Returns <code>false</code> on primary, <code>true</code> on standby</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- KEY BENEFITS -->
+  <section>
+    <h2>Key Benefits</h2>
+    <div class="panel-grid">
+      <div class="panel">
+        <h3><span class="dot up"></span>Fully Automated Recovery</h3>
+        <p>No human intervention required. EDA detects the database role change and triggers failover within 1-2 minutes.</p>
+      </div>
+      <div class="panel">
+        <h3><span class="dot up"></span>Operator-Managed Consistency</h3>
+        <p>The AAP Operator ensures all components scale together and reconcile to the desired state. No partial failovers.</p>
+      </div>
+      <div class="panel">
+        <h3><span class="dot up"></span>Clean Separation of Concerns</h3>
+        <p>Database replication is handled by Patroni/TPA. Application failover is handled by EDA + OpenShift. Each layer is independently testable.</p>
+      </div>
+      <div class="panel">
+        <h3><span class="dot up"></span>Infrastructure as Code</h3>
+        <p>The entire setup &mdash; operator subscriptions, CR templates, secrets, scaling playbooks &mdash; is version-controlled Ansible.</p>
+      </div>
+      <div class="panel">
+        <h3><span class="dot up"></span>Symmetric Architecture</h3>
+        <p>Both sites run identical monitoring and decision logic. Either site can be primary or standby. Same mechanism for failover and failback.</p>
+      </div>
+      <div class="panel">
+        <h3><span class="dot up"></span>Cost-Efficient Standby</h3>
+        <p>Standby site scales to zero pods (<code>idle_aap: true</code>), freeing compute while keeping the operator ready for instant activation.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- COMPARISON -->
+  <section>
+    <h2>OpenShift vs Traditional DR</h2>
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th style="width:26%;">Capability</th>
+          <th style="width:37%;">Traditional (RPM/VM)</th>
+          <th style="width:37%;">OpenShift + Operator</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Scaling</strong></td>
+          <td>Manual service start/stop across multiple VMs</td>
+          <td class="good">Single CR patch scales all components</td>
+        </tr>
+        <tr>
+          <td><strong>State Mgmt</strong></td>
+          <td>Config files, systemd units, manual verification</td>
+          <td class="good">Operator reconciles desired vs actual state</td>
+        </tr>
+        <tr>
+          <td><strong>Failover Time</strong></td>
+          <td>5-30 minutes (manual runbook execution)</td>
+          <td class="good">1-2 minutes (fully automated)</td>
+        </tr>
+        <tr>
+          <td><strong>Consistency</strong></td>
+          <td>Configuration drift between sites over time</td>
+          <td class="good">Identical CRs and operator versions</td>
+        </tr>
+        <tr>
+          <td><strong>Resources</strong></td>
+          <td>Standby VMs consume full resources while idle</td>
+          <td class="good">Zero pods on standby; resources freed</td>
+        </tr>
+        <tr>
+          <td><strong>Rollback</strong></td>
+          <td>Complex, error-prone restoration steps</td>
+          <td class="good">Same mechanism: patch CR, operator reconciles</td>
+        </tr>
+        <tr>
+          <td><strong>Auditability</strong></td>
+          <td>Scattered logs across VMs and services</td>
+          <td class="good">Centralized in OpenShift + Controller job history</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- FAILOVER SCENARIO -->
+  <section>
+    <h2>Failover Scenario</h2>
+    <div class="two-col">
+      <div>
+        <h3>Before Failover</h3>
+        <div class="site-state active">
+          <strong><span class="dot up pulse"></span>Site 1 &mdash; Active</strong><br>
+          DB = Primary &ensp;|&ensp; AAP = Running<br>
+          <code>idle_aap: false</code>
+        </div>
+        <div class="site-state standby">
+          <strong><span class="dot down"></span>Site 2 &mdash; Standby</strong><br>
+          DB = Replica &ensp;|&ensp; AAP = Idle (0 pods)<br>
+          <code>idle_aap: true</code>
+        </div>
+      </div>
+      <div>
+        <h3>After Failover</h3>
+        <div class="site-state standby">
+          <strong><span class="dot down"></span>Site 1 &mdash; Standby</strong><br>
+          DB = Replica &ensp;|&ensp; AAP = Idle (0 pods)<br>
+          <code>idle_aap: true</code>
+        </div>
+        <div class="site-state active">
+          <strong><span class="dot up pulse"></span>Site 2 &mdash; Active</strong><br>
+          DB = Primary &ensp;|&ensp; AAP = Running<br>
+          <code>idle_aap: false</code>
+        </div>
+      </div>
+    </div>
+    <div class="callout" style="margin-top:10px;">
+      <p style="text-align:center;">
+        Database switchover detected &rarr; CronJobs report new roles within <strong>60 seconds</strong> &rarr; EDA triggers scaling &rarr; <strong>AAP fully operational on new site in ~1-2 minutes</strong>
+      </p>
+    </div>
+  </section>
+
+  <!-- FLEXIBLE STORAGE -->
+  <section>
+    <h2>Storage Options</h2>
+    <p class="lead">Automation Hub content storage supports multiple backends for cross-site consistency</p>
+    <div class="panel-grid" style="grid-template-columns: 1fr 1fr 1fr;">
+      <div class="panel">
+        <h3>Amazon S3</h3>
+        <p>Shared S3 bucket accessible from both sites. Collections and container images are always in sync.</p>
+      </div>
+      <div class="panel">
+        <h3>Azure Blob Storage</h3>
+        <p>Azure storage account with shared container. Native integration via Kubernetes secrets.</p>
+      </div>
+      <div class="panel">
+        <h3>NFS (Dynamic or Static)</h3>
+        <p>Dynamic provisioning via StorageClass or static NFS PVs for on-premises deployments.</p>
+      </div>
+    </div>
+    <p class="small muted" style="margin-top:8px; text-align:left;">Shared object storage ensures Hub content is immediately available on the standby site without replication delay.</p>
+  </section>
+
+  <!-- PREREQUISITES -->
+  <section>
+    <h2>Prerequisites</h2>
+    <div class="two-col">
+      <div>
+        <h3>Infrastructure</h3>
+        <ul>
+          <li>2x OpenShift clusters (OCP 4.16+)</li>
+          <li>External PostgreSQL with streaming replication</li>
+          <li>Network connectivity between sites</li>
+          <li>Shared storage for Automation Hub content</li>
+        </ul>
+      </div>
+      <div>
+        <h3>Software</h3>
+        <ul>
+          <li>AAP 2.6 Operator (stable-2.6 channel)</li>
+          <li>Event-Driven Ansible with webhook support</li>
+          <li>Ansible collections:<br>
+            <span class="tag" style="font-size:1.3em;">redhat.openshift</span>
+            <span class="tag" style="font-size:1.3em;">community.postgresql</span>
+            <span class="tag" style="font-size:1.3em;">ansible.eda</span>
+          </li>
+          <li>Python 3.12+ with psycopg2</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- GETTING STARTED -->
+  <section>
+    <h2>Getting Started</h2>
+    <div class="steps">
+      <div class="step">
+        <div class="step-n">01</div>
+        <div class="step-body">
+          <h3>Configure Variables</h3>
+          <p>Copy <code>vars/main.yml.example</code> and fill in your database hosts, credentials, namespaces, and storage settings.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-n">02</div>
+        <div class="step-body">
+          <h3>Prepare Databases</h3>
+          <p>Run <code>configure_external_db.yml</code> to create roles and databases for all four AAP services.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-n">03</div>
+        <div class="step-body">
+          <h3>Deploy AAP to Both Sites</h3>
+          <p>Run <code>deploy_aap_site_one.yml</code> and <code>deploy_aap_site_two.yml</code> to install the operator and create AAP instances.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-n">04</div>
+        <div class="step-body">
+          <h3>Configure EDA</h3>
+          <p>Set up Event Streams, Rulebook Activations, credentials, and job templates in your central AAP instance.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-n">05</div>
+        <div class="step-body">
+          <h3>Deploy Monitoring</h3>
+          <p>Deploy the containerized PostgreSQL check CronJob to each site's OpenShift cluster.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CLOSING -->
+  <section>
+    <h1 style="text-align:center; border:none;">OpenShift + EDA</h1>
+    <p style="text-align:center; font-family:'IBM Plex Mono',monospace; font-size:0.65em; color:var(--text-muted); font-weight:400; margin:0 0 12px;">
+      The platform for resilient automation
+    </p>
+    <div class="stat-row">
+      <div class="stat-block">
+        <div class="val" style="color:var(--up);">Automated</div>
+        <div class="lbl">No manual failover steps</div>
+      </div>
+      <div class="stat-block">
+        <div class="val" style="color:var(--warn);">&lt;2 min</div>
+        <div class="lbl">Recovery time</div>
+      </div>
+      <div class="stat-block">
+        <div class="val" style="color:var(--text);">Reliable</div>
+        <div class="lbl">Operator-managed consistency</div>
+      </div>
+    </div>
+    <div class="callout" style="border-left-color:var(--up);">
+      <p style="text-align:center;">
+        OpenShift's operator model transforms AAP disaster recovery from a complex runbook into a simple, automated, event-driven process.
+      </p>
+    </div>
+    <p class="small" style="text-align:center; margin-top:10px;">
+      <a href="refarch.html" style="color:var(--accent);">Reference Architecture</a>
+      <span class="muted"> &ensp;&middot;&ensp; </span>
+      <a href="https://github.com/hammer-redhat/aap-multisite-failover-eda" style="color:var(--text-muted);">GitHub Repository</a>
+    </p>
+  </section>
+
+</div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/plugin/highlight/highlight.js"></script>
+<script>
+  Reveal.initialize({
+    hash: true,
+    slideNumber: 'c/t',
+    transition: 'slide',
+    backgroundTransition: 'fade',
+    center: true,
+    width: 1200,
+    height: 720,
+    margin: 0.12,
+    plugins: [RevealHighlight]
+  });
+</script>
+</body>
+</html>

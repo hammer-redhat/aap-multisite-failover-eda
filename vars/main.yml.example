@@ -69,6 +69,7 @@ aap_eda_db_fields_encryption_key: ""
 # hub_s3_secret_access_key: ""
 # hub_s3_bucket_name: ""
 # hub_s3_region: ""
+# hub_s3_endpoint: ""   # optional — only needed for S3-compatible endpoints (e.g. MinIO)
 
 # USE THIS FOR AZURE BLOB STORAGE
 # hub_content_storage_type: "azure"

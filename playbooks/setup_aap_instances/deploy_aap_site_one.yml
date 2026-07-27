@@ -1,9 +1,6 @@
 ---
 - name: Deploy AAP operator resources and secrets (site one)
   hosts: localhost
-  gather_facts: false
-  vars_files:
-    - ../../vars/main.yml
   vars:
     site_one_crs_dir: "{{ (playbook_dir ~ '/../../operator_crs/secrets/site_one') | realpath }}"
     # External Postgres secrets first, then AAP credentials (override if you add files).
@@ -18,6 +15,9 @@
       - aap-26-controller-secret-key.yml
       - aap-26-db-fields-encryption-secret.yml
       - aap-26-eda-db-fields-encryption-secret.yml
+  gather_facts: false
+  vars_files:
+    - ../../vars/main.yml
   tasks:
     - name: Validate Automation Hub content storage variables
       ansible.builtin.include_tasks: tasks/validate_hub_content_storage.yml
@@ -41,29 +41,29 @@
         seconds: 30
 
     - name: Resolve Automation Hub NFS PersistentVolume name (site one)
-      when:
-        - hub_content_storage_type | default('') == 'file'
-        - hub_file_storage_provisioning | default('dynamic') == 'static_nfs'
       ansible.builtin.set_fact:
         _hub_file_storage_pv_site: "{{ hub_file_storage_pv_name_site_one | default(hub_file_storage_pv_name) }}"
-
-    - name: Verify Automation Hub NFS PV name resolves for site one
       when:
         - hub_content_storage_type | default('') == 'file'
         - hub_file_storage_provisioning | default('dynamic') == 'static_nfs'
+
+    - name: Verify Automation Hub NFS PV name resolves for site one
       ansible.builtin.assert:
         that:
           - (_hub_file_storage_pv_site | default('')) | length > 0
         fail_msg: >-
           Define hub_file_storage_pv_name or hub_file_storage_pv_name_site_one for static NFS.
-
-    - name: Apply Automation Hub NFS PersistentVolume and claim (site one)
       when:
         - hub_content_storage_type | default('') == 'file'
         - hub_file_storage_provisioning | default('dynamic') == 'static_nfs'
+
+    - name: Apply Automation Hub NFS PersistentVolume and claim (site one)
       redhat.openshift.k8s:
         state: present
         definition: "{{ item }}"
+      when:
+        - hub_content_storage_type | default('') == 'file'
+        - hub_file_storage_provisioning | default('dynamic') == 'static_nfs'
       loop: "{{ lookup('template', site_one_crs_dir ~ '/automation-hub-file-storage-nfs.yml') | from_yaml_all | list }}"
 
     - name: Build combined document list for secret manifests

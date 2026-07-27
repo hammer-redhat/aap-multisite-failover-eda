@@ -1,0 +1,28 @@
+name: PR Closed Feedback
+
+on:
+  pull_request:
+    types: [closed]
+
+jobs:
+  notify_issue:
+    runs-on: ubuntu-latest
+    if: |
+      github.event.pull_request.merged == false &&
+      startsWith(github.event.pull_request.head.ref, 'ai-issue-')
+    permissions:
+      issues: write
+    steps:
+      - name: Post comment on related issue
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+          PR_BODY: ${{ github.event.pull_request.body }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          REPO: ${{ github.repository }}
+        run: |
+          ISSUE_NUMBER=$(echo "$PR_BODY" | grep -oP '(?<=Closes #)\d+' | head -1)
+          if [ -n "$ISSUE_NUMBER" ]; then
+            gh issue comment "$ISSUE_NUMBER" \
+              --repo "$REPO" \
+              --body "Draft PR #${PR_NUMBER} was closed without merging. Open a new issue with updated requirements to try again."
+          fi

@@ -15,9 +15,7 @@ jobs:
       contents: write
     steps:
       - name: Run PR Agent on Issues
-        uses: docker://codiumai/pr-agent:latest
+        uses: Codium-ai/pr-agent@main
         env:
+          OPENAI.KEY: ${{ secrets.OPENAI_KEY }}
           GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
-          OPENAI_KEY: ${{ secrets.OPENAI_KEY }}
-        with:
-          args: --issue_url=${{ github.event.issue.html_url }}

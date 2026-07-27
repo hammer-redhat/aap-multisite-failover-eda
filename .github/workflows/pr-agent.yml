@@ -5,18 +5,19 @@ on:
   issues:
     types: [opened]
 
-env:
-  GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
-  OPENAI_KEY: ${{ secrets.OPENAI_KEY }}
-
 jobs:
   issue_agent:
     runs-on: ubuntu-latest
     if: ${{ github.event.sender.type != 'Bot' }}
     permissions:
       issues: write
+      pull-requests: write
+      contents: write
     steps:
       - name: Run PR Agent on Issues
-        uses: docker://pragent/pr-agent:latest
+        uses: docker://codiumai/pr-agent:latest
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+          OPENAI_KEY: ${{ secrets.OPENAI_KEY }}
         with:
-          args: --issue_url=${{ github.event.issue.html_url }} --pr_help_docs.docs_path="docs/"
+          args: --issue_url=${{ github.event.issue.html_url }}

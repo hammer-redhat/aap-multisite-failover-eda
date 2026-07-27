@@ -1,0 +1,69 @@
+---
+- name: Validate hub_content_storage_type when set
+  ansible.builtin.assert:
+    that:
+      - hub_content_storage_type | default('') in ['', 's3', 'azure', 'file']
+    fail_msg: >-
+      hub_content_storage_type must be '', s3, azure, or file. Use one backend at a time
+      so only the matching secret and AnsibleAutomationPlatform hub storage fields are deployed.
+
+- name: Validate Automation Hub content storage (S3)
+  when: hub_content_storage_type | default('') == 's3'
+  ansible.builtin.assert:
+    that:
+      - hub_object_storage_secret_name | default('') | length > 0
+      - hub_s3_access_key_id | default('') | length > 0
+      - hub_s3_secret_access_key | default('') | length > 0
+      - hub_s3_bucket_name | default('') | length > 0
+      - hub_s3_region | default('') | length > 0
+    fail_msg: >-
+      For hub_content_storage_type: s3, define hub_object_storage_secret_name and all hub_s3_*
+      variables in vars/main.yml.
+
+- name: Validate Automation Hub content storage (Azure Blob)
+  when: hub_content_storage_type | default('') == 'azure'
+  ansible.builtin.assert:
+    that:
+      - hub_object_storage_secret_name | default('') | length > 0
+      - hub_azure_account_name | default('') | length > 0
+      - hub_azure_account_key | default('') | length > 0
+      - hub_azure_container | default('') | length > 0
+    fail_msg: >-
+      For hub_content_storage_type: azure, define hub_object_storage_secret_name and
+      hub_azure_account_name, hub_azure_account_key, hub_azure_container in vars/main.yml.
+
+- name: Validate hub_file_storage_provisioning when using file backend
+  when: hub_content_storage_type | default('') == 'file'
+  ansible.builtin.assert:
+    that:
+      - >-
+        hub_file_storage_provisioning | default('dynamic') in ['dynamic', 'static_nfs']
+    fail_msg: >-
+      hub_file_storage_provisioning must be dynamic or static_nfs when using file hub storage (default dynamic).
+
+- name: Validate Automation Hub file storage (dynamic provisioning)
+  when:
+    - hub_content_storage_type | default('') == 'file'
+    - hub_file_storage_provisioning | default('dynamic') == 'dynamic'
+  ansible.builtin.assert:
+    that:
+      - hub_file_storage_storage_class | default('') | length > 0
+      - hub_file_storage_size | default('') | length > 0
+    fail_msg: >-
+      For hub_content_storage_type: file with dynamic provisioning, define
+      hub_file_storage_storage_class and hub_file_storage_size in vars/main.yml.
+
+- name: Validate Automation Hub file storage (static NFS — PV/PVC manifests)
+  when:
+    - hub_content_storage_type | default('') == 'file'
+    - hub_file_storage_provisioning | default('dynamic') == 'static_nfs'
+  ansible.builtin.assert:
+    that:
+      - hub_file_storage_nfs_server | default('') | length > 0
+      - hub_file_storage_nfs_path | default('') | length > 0
+      - hub_file_storage_size | default('') | length > 0
+    fail_msg: >-
+      For hub_content_storage_type: file with hub_file_storage_provisioning: static_nfs,
+      define hub_file_storage_nfs_server, hub_file_storage_nfs_path, and hub_file_storage_size
+      in vars/main.yml. Use a distinct cluster-unique hub_file_storage_pv_name (and site overrides
+      if needed) — validated when each site playbook resolves the PersistentVolume name.

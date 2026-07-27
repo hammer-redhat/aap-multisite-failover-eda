@@ -1,0 +1,84 @@
+---
+- name: Deploy AAP operator resources and secrets (site two)
+  hosts: localhost
+  gather_facts: false
+  vars_files:
+    - ../../vars/main.yml
+  vars:
+    site_two_crs_dir: "{{ (playbook_dir ~ '/../../operator_crs/secrets/site_two') | realpath }}"
+    # External Postgres secrets first, then AAP credentials (override if you add files).
+    site_two_secret_manifests:
+      - external-postgres-configuration-controller.yml
+      - external-postgres-configuration-eda.yml
+      - external-postgres-configuration-gateway.yml
+      - external-postgres-configuration-hub.yml
+      - aap-26-admin-password.yml
+      - aap-26-automationhub-db-fields-encryption.yml
+      - aap-26-controller-admin-password.yml
+      - aap-26-controller-secret-key.yml
+      - aap-26-db-fields-encryption-secret.yml
+      - aap-26-eda-db-fields-encryption-secret.yml
+  tasks:
+    - name: Validate Automation Hub content storage variables
+      ansible.builtin.include_tasks: tasks/validate_hub_content_storage.yml
+
+    - name: Select Automation Hub object storage Secret manifests (site two)
+      ansible.builtin.set_fact:
+        _site_two_hub_storage_manifests: >-
+          {{
+            ['automation-hub-object-storage-s3.yml'] if (hub_content_storage_type | default('')) == 's3' else (
+            ['automation-hub-object-storage-azure.yml'] if (hub_content_storage_type | default('')) == 'azure' else [])
+          }}
+
+    - name: Apply subscription manifest (Namespace, OperatorGroup, Subscription)
+      redhat.openshift.k8s:
+        state: present
+        definition: "{{ item }}"
+      loop: "{{ lookup('template', site_two_crs_dir ~ '/subscription.yml') | from_yaml_all | list }}"
+
+    - name: Wait for operator subscription to install
+      ansible.builtin.pause:
+        seconds: 30
+
+    - name: Resolve Automation Hub NFS PersistentVolume name (site two)
+      when:
+        - hub_content_storage_type | default('') == 'file'
+        - hub_file_storage_provisioning | default('dynamic') == 'static_nfs'
+      ansible.builtin.set_fact:
+        _hub_file_storage_pv_site: "{{ hub_file_storage_pv_name_site_two | default(hub_file_storage_pv_name) }}"
+
+    - name: Verify Automation Hub NFS PV name resolves for site two
+      when:
+        - hub_content_storage_type | default('') == 'file'
+        - hub_file_storage_provisioning | default('dynamic') == 'static_nfs'
+      ansible.builtin.assert:
+        that:
+          - (_hub_file_storage_pv_site | default('')) | length > 0
+        fail_msg: >-
+          Define hub_file_storage_pv_name or hub_file_storage_pv_name_site_two for static NFS.
+
+    - name: Apply Automation Hub NFS PersistentVolume and claim (site two)
+      when:
+        - hub_content_storage_type | default('') == 'file'
+        - hub_file_storage_provisioning | default('dynamic') == 'static_nfs'
+      redhat.openshift.k8s:
+        state: present
+        definition: "{{ item }}"
+      loop: "{{ lookup('template', site_two_crs_dir ~ '/automation-hub-file-storage-nfs.yml') | from_yaml_all | list }}"
+
+    - name: Build combined document list for secret manifests
+      ansible.builtin.set_fact:
+        _site_two_secret_docs: "{{ _site_two_secret_docs | default([]) + (lookup('template', site_two_crs_dir ~ '/' ~ item) | from_yaml_all | list) }}"
+      loop: "{{ site_two_secret_manifests + (_site_two_hub_storage_manifests | default([])) }}"
+
+    - name: Apply secret manifests
+      redhat.openshift.k8s:
+        state: present
+        definition: "{{ item }}"
+      loop: "{{ _site_two_secret_docs }}"
+
+    - name: Apply AnsibleAutomationPlatform CR last
+      redhat.openshift.k8s:
+        state: present
+        definition: "{{ item }}"
+      loop: "{{ lookup('template', site_two_crs_dir ~ '/aap_cr_site_two.yml') | from_yaml_all | list }}"

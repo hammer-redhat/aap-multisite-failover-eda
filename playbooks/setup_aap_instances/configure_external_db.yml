@@ -1,0 +1,60 @@
+---
+# Create AAP Postgres roles (superuser) and databases owned by each role.
+# Uses vars/main.yml: db_* credentials per service, db_port, db_sslmode, db_host_site_one,
+# and postgres_admin_* for the cluster superuser connection.
+#
+# Requires: ansible collection community.postgresql, and psycopg2 on the Ansible controller.
+# Target host: override with -e postgres_configure_host="{{ db_host_site_two }}" for site two.
+- name: Configure external Postgres users and databases for AAP
+  hosts: localhost
+  gather_facts: false
+  vars_files:
+    - ../../vars/main.yml
+  vars:
+    postgres_configure_host: "{{ postgres_configure_host | default(db_host_site_one) }}"
+    _aap_pg_services:
+      - username: "{{ db_username_controller }}"
+        password: "{{ db_password_controller }}"
+        database: "{{ db_name_controller }}"
+      - username: "{{ db_username_hub }}"
+        password: "{{ db_password_hub }}"
+        database: "{{ db_name_hub }}"
+      - username: "{{ db_username_gateway }}"
+        password: "{{ db_password_gateway }}"
+        database: "{{ db_name_gateway }}"
+      - username: "{{ db_username_eda }}"
+        password: "{{ db_password_eda }}"
+        database: "{{ db_name_eda }}"
+  tasks:
+    - name: Ensure AAP Postgres roles exist with superuser
+      community.postgresql.postgresql_user:
+        login_host: "{{ postgres_configure_host }}"
+        login_port: "{{ db_port | int }}"
+        login_user: "{{ postgres_admin_user }}"
+        login_password: "{{ postgres_admin_password }}"
+        login_db: postgres
+        connect_params:
+          sslmode: "{{ db_sslmode }}"
+        name: "{{ item.username }}"
+        password: "{{ item.password }}"
+        role_attr_flags: SUPERUSER
+        state: present
+      loop: "{{ _aap_pg_services }}"
+      loop_control:
+        label: "{{ item.username }}"
+
+    - name: Ensure each AAP database exists and is owned by its role
+      community.postgresql.postgresql_db:
+        login_host: "{{ postgres_configure_host }}"
+        login_port: "{{ db_port | int }}"
+        login_user: "{{ postgres_admin_user }}"
+        login_password: "{{ postgres_admin_password }}"
+        maintenance_db: postgres
+        connect_params:
+          sslmode: "{{ db_sslmode }}"
+        name: "{{ item.database }}"
+        owner: "{{ item.username }}"
+        state: present
+      loop: "{{ _aap_pg_services }}"
+      loop_control:
+        label: "{{ item.database }}"

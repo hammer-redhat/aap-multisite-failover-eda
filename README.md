@@ -98,7 +98,7 @@ cp vars/main.yml.example vars/main.yml
 | Postgres admin | `postgres_admin_user`, `postgres_admin_password`, `postgres_configure_host` | Admin credentials used by `configure_external_db.yml` |
 | DB hosts | `db_host_site_one`, `db_host_site_two`, `db_port`, `db_sslmode` | Per-site Postgres endpoints |
 | Per-service DB creds | `db_name_*`, `db_username_*`, `db_password_*` | Separate credentials for controller, eda, hub, gateway |
-| AAP secrets | `controller_admin_password`, `aap_admin_password`, `controller_secret_key`, encryption keys | Applied as Kubernetes Secrets before the AAP CR |
+| AAP secrets | `controller_admin_password`, `aap_admin_password`, `controller_secret_key`, `automationhub_db_fields_encryption_key`, `aap_db_fields_encryption_key`, `aap_eda_db_fields_encryption_key` | Applied as Kubernetes Secrets before the AAP CR |
 | Hub content storage | `hub_content_storage_type` | `""` (operator default), `s3`, `azure`, or `file` — choose one backend |
 
 See `vars/main.yml.example` for the full list of variables and per-backend Hub storage options (S3, Azure Blob, dynamic NFS, static NFS).
@@ -294,7 +294,9 @@ In **Automation Decisions (EDA)**:
 
 ### 7. Deploy the Postgres monitoring script
 
-**Option A — CronJob on bastion/DB nodes (legacy):**
+> **The monitoring CronJob must be deployed on both Site 1 and Site 2.** Each site runs its own check against its local PostgreSQL instance and reports to its own EDA Event Stream.
+
+**Option A — cron daemon on bastion/DB nodes (legacy):**
 
 Populate the postgres check scripts from `files/postgres_checks/postgres_check_example.py` (one per site), then run:
 
@@ -302,20 +304,71 @@ Populate the postgres check scripts from `files/postgres_checks/postgres_check_e
 ansible-playbook playbooks/deploy_postgres_check.yml -i inventory/
 ```
 
+> This playbook expects pre-populated `files/postgres_check_site1.py` and `files/postgres_check_site2.py` scripts with site-specific credentials hardcoded. Use Option B for new deployments.
+
 **Option B — OpenShift CronJob (recommended):**
 
-Build and push the container image:
+> This must be deployed once per site — each site needs its own Secrets pointing at that site's PostgreSQL database and EDA Event Stream.
+
+**Step 1 — Check your OCP node architecture** (the container image must match the nodes, not your laptop):
+
+```bash
+oc get nodes -o jsonpath='{.items[0].status.nodeInfo.architecture}{"\n"}'
+```
+
+**Step 2 — Build and push the container image** from `files/postgres_checks/`:
 
 ```bash
 cd files/postgres_checks/
-podman build -t postgres-check .
-podman push postgres-check <your-registry>/postgres-check
+
+# Build for the correct platform (amd64 is most common; use arm64 if nodes report arm64):
+podman build --platform linux/amd64 -t <your-registry>/postgres-check:v1 .
+podman push <your-registry>/postgres-check:v1
 ```
 
-Deploy using the included manifest, substituting your site's webhook URL, auth token, and DB connection details:
+> Mismatched architecture causes `Exec format error` at runtime. See the comment block at the top of `files/postgres_checks/openshift-deployment.example.yaml` for full details.
+
+**Step 3 — Create site-specific copies of the manifest** and update the following fields for each site:
 
 ```bash
-oc apply -f files/postgres_checks/openshift-deployment.example.yaml
+cp files/postgres_checks/openshift-deployment.example.yaml openshift-deployment-site1.yaml
+cp files/postgres_checks/openshift-deployment.example.yaml openshift-deployment-site2.yaml
+```
+
+In each copy, update these fields:
+
+| Field | Object | What to set |
+|-------|--------|-------------|
+| `WEBHOOK_URL` | `postgres-check-webhook` Secret | EDA Event Stream URL for this site (from step 6) |
+| `AUTH_TOKEN` | `postgres-check-webhook` Secret | EDA Event Stream token for this site (from step 6) |
+| `DB_CONFIG` | `postgres-check-db` Secret | JSON object with this site's gateway DB credentials (see below) |
+| `image:` | Job and CronJob `containers` spec | Replace `quay.io/chrhamme/postgres-check:v3` with your pushed image |
+| `schedule:` | CronJob spec | `"* * * * *"` runs every minute; use `"*/5 * * * *"` for production |
+
+**`DB_CONFIG` format** — maps directly to variables in `vars/main.yml`:
+
+```json
+{
+  "host": "<db_host_site_one>",
+  "port": 5432,
+  "dbname": "<db_name_gateway>",
+  "user": "<db_username_gateway>",
+  "password": "<db_password_gateway>"
+}
+```
+
+For Site 2, substitute `db_host_site_two` for `host`. The `dbname`, `user`, and `password` values come from the `db_name_gateway`, `db_username_gateway`, and `db_password_gateway` variables in your `vars/main.yml`.
+
+Alternatively, omit `DB_CONFIG` entirely and use individual keys (`PGHOST`, `PGUSER`, `PGPASSWORD`, `PGPORT`, `PGDATABASE`) — the script reads either form.
+
+**Step 4 — Apply to both sites** using the appropriate cluster credentials and namespace for each:
+
+```bash
+# Site 1 — namespace must match namespace_site_one in vars/main.yml (default: aap-26)
+oc apply -n aap-26 -f openshift-deployment-site1.yaml
+
+# Site 2 — namespace must match namespace_site_two in vars/main.yml (default: aap-26-dr)
+oc apply -n aap-26-dr -f openshift-deployment-site2.yaml
 ```
 
 ---

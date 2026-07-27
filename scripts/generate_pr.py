@@ -132,7 +132,11 @@ def write_changes(repo_root: Path, changes: list) -> int:
         if not path or not content:
             print(f'WARNING: Skipping change with missing path or content', file=sys.stderr)
             continue
-        full = repo_root / path
+        full = (repo_root / path).resolve()
+        repo_resolved = repo_root.resolve()
+        if not str(full).startswith(str(repo_resolved) + os.sep):
+            print(f'WARNING: {path} escapes repo root, skipping', file=sys.stderr)
+            continue
         if action == 'modify' and not full.exists():
             print(f'WARNING: modify target {path} does not exist, skipping', file=sys.stderr)
             continue
@@ -148,7 +152,7 @@ def slugify(text: str, max_len: int = 50) -> str:
     text = text.lower()
     text = re.sub(r'[^a-z0-9\s-]', '', text)
     text = re.sub(r'[\s-]+', '-', text).strip('-')
-    return text[:max_len]
+    return text[:max_len].rstrip('-')
 
 
 def write_github_output(key: str, value: str) -> None:
@@ -167,9 +171,12 @@ def post_issue_comment(github_token: str, repo: str, issue_number: str, body: st
     req.add_header('Authorization', f'Bearer {github_token}')
     req.add_header('Accept', 'application/vnd.github+json')
     req.add_header('Content-Type', 'application/json')
-    with urllib.request.urlopen(req) as resp:
-        if resp.status not in (200, 201):
-            print(f'WARNING: Failed to post comment, status {resp.status}', file=sys.stderr)
+    try:
+        with urllib.request.urlopen(req) as resp:
+            if resp.status not in (200, 201):
+                print(f'WARNING: Failed to post comment, status {resp.status}', file=sys.stderr)
+    except Exception as e:
+        print(f'WARNING: Failed to post issue comment: {e}', file=sys.stderr)
 
 
 def main() -> int:
@@ -214,6 +221,13 @@ def main() -> int:
 
     print(f'Selected: {selected}')
     file_contents = load_files(repo_root, selected)
+
+    if not file_contents:
+        post_issue_comment(github_token, repo, issue_number,
+            'All selected files were missing or too large to load. '
+            'Please make the changes manually.')
+        write_github_output('changes_made', 'false')
+        return 0
 
     # ── Call 2: generate changes ──────────────────────────────────────────
     print('Step 2: Generating changes...')

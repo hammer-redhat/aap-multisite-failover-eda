@@ -7,9 +7,6 @@
 # Target host: override with -e postgres_configure_host="{{ db_host_site_two }}" for site two.
 - name: Configure external Postgres users and databases for AAP
   hosts: localhost
-  gather_facts: false
-  vars_files:
-    - ../../vars/main.yml
   vars:
     postgres_configure_host: "{{ postgres_configure_host | default(db_host_site_one) }}"
     _aap_pg_services:
@@ -25,6 +22,9 @@
       - username: "{{ db_username_eda }}"
         password: "{{ db_password_eda }}"
         database: "{{ db_name_eda }}"
+  gather_facts: false
+  vars_files:
+    - ../../vars/main.yml
   tasks:
     - name: Ensure AAP Postgres roles exist with superuser
       community.postgresql.postgresql_user:

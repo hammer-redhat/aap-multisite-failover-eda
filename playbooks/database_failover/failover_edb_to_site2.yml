@@ -1,9 +1,9 @@
 ---
-- name: Call the playbook run from bastion node to fialover the EDB cluster to Site 2 as the primary. 
+- name: Call the playbook run from bastion node to failover the EDB cluster to Site 2 as the primary.
   hosts: all
   gather_facts: false
-  tasks: 
-    - name: Failover EDB cluster to Site 2 as primary/leader. 
+  tasks:
+    - name: Failover EDB cluster to Site 2 as primary/leader.
       ansible.builtin.shell:
-        cmd: tpaexec playbook aap-multisite /opt/EDB/TPA/architectures/M1/commands/switchover.yml -e "target={{ site_two_db }}"
+        cmd: tpaexec playbook "{{ edb_cluster }}" /opt/EDB/TPA/architectures/M1/commands/switchover.yml -e "target={{ site_two_db }}"
         chdir: /home/rhel/

@@ -1,10 +1,3 @@
-# Build for the same OS/arch as your OpenShift *nodes* (not your laptop):
-#   ./build-for-openshift.sh -t your-registry/postgres-check:v1
-# Or manually, after checking node arch (see openshift-deployment.example.yaml):
-#   podman build --platform linux/amd64 -t ...
-#   podman build --platform linux/arm64 -t ...
-#
-# Using the wrong --platform gives: exec ... python: Exec format error
 FROM python:3.12-slim
 
 WORKDIR /app

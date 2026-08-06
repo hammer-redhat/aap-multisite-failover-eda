@@ -1,0 +1,18 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: aap-site-metrics
+  namespace: "{{ site_namespace }}"
+  labels:
+    app: aap-site-metrics
+spec:
+  selector:
+    matchLabels:
+      app: aap-site-metrics
+  endpoints:
+    - port: metrics
+      path: /metrics
+      interval: 60s
+      relabelings:
+        - targetLabel: site
+          replacement: "{{ site_label }}"

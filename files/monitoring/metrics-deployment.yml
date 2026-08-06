@@ -1,0 +1,64 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: aap-site-metrics
+  namespace: "{{ site_namespace }}"
+  labels:
+    app: aap-site-metrics
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: aap-site-metrics
+  template:
+    metadata:
+      labels:
+        app: aap-site-metrics
+    spec:
+      containers:
+        - name: aap-site-metrics
+          image: "{{ postgres_check_image }}"
+          env:
+            - name: MODE
+              value: "metrics"
+            - name: SITE_LABEL
+              value: "{{ site_label }}"
+            - name: CHECK_INTERVAL
+              value: "60"
+            - name: METRICS_PORT
+              value: "8080"
+            - name: DB_CONFIG
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-check-db
+                  key: DB_CONFIG
+            - name: WEBHOOK_URL
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-check-webhook
+                  key: WEBHOOK_URL
+            - name: AUTH_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-check-webhook
+                  key: AUTH_TOKEN
+          ports:
+            - name: metrics
+              containerPort: 8080
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /metrics
+              port: 8080
+            initialDelaySeconds: 15
+            periodSeconds: 30
+            failureThreshold: 3
+          resources:
+            requests:
+              cpu: "50m"
+              memory: "64Mi"
+            limits:
+              cpu: "100m"
+              memory: "128Mi"
+      securityContext:
+        runAsNonRoot: true

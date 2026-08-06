@@ -9,6 +9,7 @@
 - [Playbooks](#playbooks)
 - [Rulebooks](#rulebooks)
 - [Usage](#usage)
+- [Observability Dashboard](#observability-dashboard)
 - [Failover Example](#failover-example)
 
 ---
@@ -169,6 +170,27 @@ hub_cr_name: "aap-26"             # AutomationHub CR name
 Deploys Python postgres check scripts and configures cron jobs on bastion or DB nodes. The scripts POST `{"in_recovery": true|false}` to an EDA Event Stream webhook every minute.
 
 > **Modern alternative:** Use the containerized approach in `files/postgres_checks/` — build the Docker image and deploy the included `openshift-deployment.example.yaml` as an OpenShift CronJob instead.
+
+### Observability Dashboard (`playbooks/deploy_dashboard/`)
+
+Deploys a Prometheus metrics sidecar to both clusters and provisions a centralized Grafana instance with a side-by-side view of both sites' health, active/passive status, and failover history.
+
+| File | Purpose |
+|------|---------|
+| `deploy_dashboard.yml` | Top-level playbook — applies OCP manifests then provisions Grafana |
+| `tasks/apply_ocp_manifests.yml` | Applies `aap-site-metrics` Deployment, Service, ServiceMonitor, and PrometheusRule to one cluster |
+| `tasks/provision_datasources.yml` | Creates two Prometheus datasources in Grafana (one per cluster's Thanos Querier) |
+| `tasks/provision_dashboard.yml` | Imports `files/grafana/dashboard.json` into Grafana |
+| `tasks/provision_alerts.yml` | Creates cross-site Grafana alert rules (`AAPSiteSplitBrain`, `AAPNoPrimary`) |
+
+The `postgres_check` container supports a `MODE=metrics` option (alongside the existing `MODE=cron` default) that exposes four Prometheus gauges on `:8080/metrics`:
+
+| Metric | Description |
+|--------|-------------|
+| `aap_site_in_recovery` | `0` = active/primary, `1` = passive/standby |
+| `aap_pg_check_success` | `1` = last DB check succeeded, `0` = failed |
+| `aap_pg_check_last_run_timestamp_seconds` | Unix timestamp of last successful check |
+| `aap_pg_check_duration_seconds` | Duration of last DB query |
 
 ### Database Failover Helpers (`playbooks/database_failover/`)
 
@@ -369,6 +391,63 @@ oc apply -n aap-26 -f openshift-deployment-site1.yaml
 
 # Site 2 — namespace must match namespace_site_two in vars/main.yml (default: aap-26-dr)
 oc apply -n aap-26-dr -f openshift-deployment-site2.yaml
+```
+
+### 8. Deploy the observability dashboard
+
+Provisions the `aap-site-metrics` Deployment on both clusters (Prometheus metrics mode), applies User Workload Monitoring manifests, and configures your centralized Grafana instance with datasources, the side-by-side dashboard, and cross-site alert rules.
+
+**Prerequisites:**
+
+- OCP User Workload Monitoring enabled on both clusters (`enableUserWorkload: true` in the `cluster-monitoring-config` ConfigMap)
+- `postgres-check-db` Secret already deployed in each AAP namespace (from step 7)
+- A Grafana service account token with Editor role for your Grafana instance
+- An OCP Service Account token with `cluster-monitoring-view` role on each cluster for Thanos Querier access
+
+**Add these variables to `vars/main.yml`** (see `vars/main.yml.example` for full descriptions):
+
+| Variable | Description |
+|----------|-------------|
+| `grafana_url` | Base URL of your Grafana instance, e.g. `https://grafana.example.com` |
+| `grafana_api_token` | Grafana service account token (Editor role) |
+| `postgres_check_image` | Container image to use, e.g. `quay.io/chrhamme/postgres-check:v3` |
+| `thanos_querier_site_one` | Thanos Querier hostname for Site 1 (no scheme, no port) |
+| `thanos_querier_site_two` | Thanos Querier hostname for Site 2 (no scheme, no port) |
+| `thanos_bearer_token_site_one` | OCP SA token with `cluster-monitoring-view` on Site 1 |
+| `thanos_bearer_token_site_two` | OCP SA token with `cluster-monitoring-view` on Site 2 |
+| `site_label_one` | Short label for Site 1 metrics (default: `site1`) |
+| `site_label_two` | Short label for Site 2 metrics (default: `site2`) |
+
+**Find your Thanos Querier hostname:**
+
+```bash
+oc -n openshift-monitoring get route thanos-querier -o jsonpath='{.spec.host}'
+```
+
+**Create a monitoring-view token for each cluster:**
+
+```bash
+oc -n openshift-monitoring create token prometheus-k8s --duration=8760h
+```
+
+**Run the playbook:**
+
+```bash
+ansible-playbook playbooks/deploy_dashboard/deploy_dashboard.yml \
+  -e k8s_context_site_one=<your-site1-kubeconfig-context> \
+  -e k8s_context_site_two=<your-site2-kubeconfig-context>
+```
+
+The playbook applies OCP manifests to both clusters, then provisions the Grafana datasources, dashboard (uid: `aap-multisite-obs`), and cross-site alert rules (`AAPSiteSplitBrain`, `AAPNoPrimary`) in one run.
+
+**Verify:**
+
+```bash
+# Confirm metrics are being scraped (from each cluster)
+oc -n aap-26 port-forward deploy/aap-site-metrics 8080:8080
+curl -s http://localhost:8080/metrics | grep aap_
+
+# In Grafana — navigate to Dashboards > AAP Multisite Observability
 ```
 
 ---

@@ -10,6 +10,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY postgres_check_example.py .
 
+EXPOSE 8080
+
 USER nobody
 
 # Absolute path avoids PATH edge cases; python3 matches the slim image

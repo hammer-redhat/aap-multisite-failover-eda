@@ -26,6 +26,20 @@
     status_code: [200, 201, 409]
     validate_certs: true
 
+- name: Fetch Site 1 datasource UID
+  ansible.builtin.uri:
+    url: "{{ grafana_url }}/api/datasources/name/AAP%20Site%201"
+    method: GET
+    headers:
+      Authorization: "Bearer {{ grafana_api_token }}"
+    status_code: [200]
+    validate_certs: true
+  register: _site1_ds
+
+- name: Set Site 1 datasource UID fact
+  ansible.builtin.set_fact:
+    grafana_ds_uid_site1: "{{ _site1_ds.json.uid }}"
+
 - name: Provision Site 2 Prometheus datasource
   ansible.builtin.uri:
     url: "{{ grafana_url }}/api/datasources"
@@ -49,3 +63,17 @@
       editable: true
     status_code: [200, 201, 409]
     validate_certs: true
+
+- name: Fetch Site 2 datasource UID
+  ansible.builtin.uri:
+    url: "{{ grafana_url }}/api/datasources/name/AAP%20Site%202"
+    method: GET
+    headers:
+      Authorization: "Bearer {{ grafana_api_token }}"
+    status_code: [200]
+    validate_certs: true
+  register: _site2_ds
+
+- name: Set Site 2 datasource UID fact
+  ansible.builtin.set_fact:
+    grafana_ds_uid_site2: "{{ _site2_ds.json.uid }}"

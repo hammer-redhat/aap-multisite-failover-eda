@@ -24,8 +24,8 @@
   tasks:
     - name: Apply monitoring manifests to site one
       ansible.builtin.include_tasks: tasks/apply_ocp_manifests.yml
-      environment:
-        K8S_AUTH_CONTEXT: "{{ k8s_context_site_one | default(omit) }}"
+      vars:
+        k8s_context: "{{ k8s_context_site_one | default(omit) }}"
 
 - name: Apply OCP manifests to Site 2
   hosts: localhost
@@ -38,8 +38,8 @@
   tasks:
     - name: Apply monitoring manifests to site two
       ansible.builtin.include_tasks: tasks/apply_ocp_manifests.yml
-      environment:
-        K8S_AUTH_CONTEXT: "{{ k8s_context_site_two | default(omit) }}"
+      vars:
+        k8s_context: "{{ k8s_context_site_two | default(omit) }}"
 
 - name: Provision Grafana
   hosts: localhost

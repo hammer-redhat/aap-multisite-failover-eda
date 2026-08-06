@@ -13,6 +13,7 @@ spec:
     - port: metrics
       path: /metrics
       interval: 60s
+      honorLabels: true
       relabelings:
         - targetLabel: site
           replacement: "{{ site_label }}"

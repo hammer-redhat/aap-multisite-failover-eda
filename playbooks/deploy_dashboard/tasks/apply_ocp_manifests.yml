@@ -5,19 +5,23 @@
 - name: Apply aap-site-metrics Deployment
   kubernetes.core.k8s:
     state: present
+    context: "{{ k8s_context | default(omit) }}"
     definition: "{{ lookup('ansible.builtin.template', '../../files/monitoring/metrics-deployment.yml') | from_yaml }}"
 
 - name: Apply aap-site-metrics Service
   kubernetes.core.k8s:
     state: present
+    context: "{{ k8s_context | default(omit) }}"
     definition: "{{ lookup('ansible.builtin.template', '../../files/monitoring/metrics-service.yml') | from_yaml }}"
 
 - name: Apply ServiceMonitor
   kubernetes.core.k8s:
     state: present
+    context: "{{ k8s_context | default(omit) }}"
     definition: "{{ lookup('ansible.builtin.template', '../../files/monitoring/service-monitor.yml') | from_yaml }}"
 
 - name: Apply PrometheusRule
   kubernetes.core.k8s:
     state: present
+    context: "{{ k8s_context | default(omit) }}"
     definition: "{{ lookup('ansible.builtin.template', '../../files/monitoring/prometheus-rule.yml') | from_yaml }}"

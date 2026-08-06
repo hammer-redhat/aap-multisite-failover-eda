@@ -2,19 +2,8 @@
 # Provision cross-site Grafana alert rules.
 # Uses Grafana Unified Alerting ruler API — requires Grafana 9+ with unified alerting enabled.
 #
-# The datasourceUid values below use Ansible variables (grafana_ds_uid_site1 / grafana_ds_uid_site2).
-# Retrieve the UIDs after provision_datasources runs:
-#
-#   SITE1_UID=$(curl -s -H "Authorization: Bearer $GRAFANA_TOKEN" \
-#     $GRAFANA_URL/api/datasources/name/AAP%20Site%201 | python3 -c "import sys,json; print(json.load(sys.stdin)['uid'])")
-#   SITE2_UID=$(curl -s -H "Authorization: Bearer $GRAFANA_TOKEN" \
-#     $GRAFANA_URL/api/datasources/name/AAP%20Site%202 | python3 -c "import sys,json; print(json.load(sys.stdin)['uid'])")
-#
-# Then pass them as extra vars:
-#   ansible-playbook playbooks/deploy_dashboard/deploy_dashboard.yml \
-#     -e grafana_ds_uid_site1=$SITE1_UID \
-#     -e grafana_ds_uid_site2=$SITE2_UID \
-#     ...
+# The datasourceUid values below use Ansible variables (grafana_ds_uid_site1 / grafana_ds_uid_site2)
+# that are set automatically by provision_datasources.yml.
 
 - name: Create alert rule group for cross-site AAP alerts
   ansible.builtin.uri:

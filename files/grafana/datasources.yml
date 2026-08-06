@@ -1,0 +1,32 @@
+# Grafana datasource provisioning reference.
+# Values are Jinja2 templates — rendered by the Ansible deploy_dashboard playbook.
+# For manual provisioning, copy to /etc/grafana/provisioning/datasources/ on the Grafana host
+# and substitute real values for the {{ }} placeholders.
+
+apiVersion: 1
+datasources:
+  - name: "AAP Site 1"
+    type: prometheus
+    access: proxy
+    url: "https://{{ thanos_querier_site_one }}"
+    basicAuth: false
+    jsonData:
+      httpMethod: GET
+      httpHeaderName1: "Authorization"
+    secureJsonData:
+      httpHeaderValue1: "Bearer {{ thanos_bearer_token_site_one }}"
+    isDefault: false
+    editable: true
+
+  - name: "AAP Site 2"
+    type: prometheus
+    access: proxy
+    url: "https://{{ thanos_querier_site_two }}"
+    basicAuth: false
+    jsonData:
+      httpMethod: GET
+      httpHeaderName1: "Authorization"
+    secureJsonData:
+      httpHeaderValue1: "Bearer {{ thanos_bearer_token_site_two }}"
+    isDefault: false
+    editable: true

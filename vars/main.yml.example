@@ -100,3 +100,26 @@ aap_eda_db_fields_encryption_key: ""
 # Separate PV names required if both site playbooks deploy to the same Kubernetes cluster:
 # hub_file_storage_pv_name_site_one: ""
 # hub_file_storage_pv_name_site_two: ""
+
+# --- Observability Dashboard ---
+
+# Grafana instance (pre-existing, external host)
+grafana_url: "https://grafana.example.com"
+grafana_api_token: ""  # Grafana service account token with Editor role
+
+# postgres_check container image (must match the image used in openshift-deployment.example.yaml)
+postgres_check_image: "quay.io/chrhamme/postgres-check:v3"
+
+# OCP Thanos Querier endpoints — accessible from the Grafana host
+# Find via: oc -n openshift-monitoring get route thanos-querier -o jsonpath='{.spec.host}'
+thanos_querier_site_one: ""   # hostname only, e.g. thanos-querier-openshift-monitoring.apps.site1.example.com
+thanos_querier_site_two: ""   # hostname only, e.g. thanos-querier-openshift-monitoring.apps.site2.example.com
+
+# OCP Service Account tokens with cluster-monitoring-view role for each cluster
+# Create via: oc -n openshift-monitoring create token prometheus-k8s --duration=8760h
+thanos_bearer_token_site_one: ""
+thanos_bearer_token_site_two: ""
+
+# Site labels — must match the SITE_LABEL env var used in the Deployment (and the site label in ServiceMonitor)
+site_label_one: "site1"
+site_label_two: "site2"

@@ -1,0 +1,57 @@
+---
+# Deploy AAP multisite observability dashboard.
+#
+# Prerequisites:
+#   - OCP User Workload Monitoring enabled on both clusters
+#   - postgres-check-db and postgres-check-webhook Secrets already exist in both namespaces
+#     (created by openshift-deployment.example.yaml setup)
+#   - K8S_AUTH_* env vars or kubeconfig set for each cluster before running
+#
+# Usage (site 1 kubeconfig active):
+#   ansible-playbook playbooks/deploy_dashboard/deploy_dashboard.yml \
+#     -e k8s_context_site_one=<ctx> -e k8s_context_site_two=<ctx>
+#
+# Or set KUBECONFIG to a merged kubeconfig and pass context names via extra vars.
+
+- name: Apply OCP manifests to Site 1
+  hosts: localhost
+  gather_facts: false
+  vars_files:
+    - "../../vars/main.yml"
+  vars:
+    site_namespace: "{{ namespace_site_one }}"
+    site_label: "{{ site_label_one }}"
+  tasks:
+    - name: Apply monitoring manifests to site one
+      ansible.builtin.include_tasks: tasks/apply_ocp_manifests.yml
+      environment:
+        K8S_AUTH_CONTEXT: "{{ k8s_context_site_one | default(omit) }}"
+
+- name: Apply OCP manifests to Site 2
+  hosts: localhost
+  gather_facts: false
+  vars_files:
+    - "../../vars/main.yml"
+  vars:
+    site_namespace: "{{ namespace_site_two }}"
+    site_label: "{{ site_label_two }}"
+  tasks:
+    - name: Apply monitoring manifests to site two
+      ansible.builtin.include_tasks: tasks/apply_ocp_manifests.yml
+      environment:
+        K8S_AUTH_CONTEXT: "{{ k8s_context_site_two | default(omit) }}"
+
+- name: Provision Grafana
+  hosts: localhost
+  gather_facts: false
+  vars_files:
+    - "../../vars/main.yml"
+  tasks:
+    - name: Provision datasources
+      ansible.builtin.include_tasks: tasks/provision_datasources.yml
+
+    - name: Provision dashboard
+      ansible.builtin.include_tasks: tasks/provision_dashboard.yml
+
+    - name: Provision cross-site Grafana alert rules
+      ansible.builtin.include_tasks: tasks/provision_alerts.yml

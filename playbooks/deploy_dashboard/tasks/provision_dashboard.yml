@@ -1,0 +1,27 @@
+---
+# Import the AAP Multisite Observability dashboard into Grafana.
+# POST /api/dashboards/import — overwrites on uid collision (idempotent).
+
+- name: Read dashboard JSON
+  ansible.builtin.set_fact:
+    dashboard_json: "{{ lookup('ansible.builtin.file', '../../files/grafana/dashboard.json') | from_json }}"
+
+- name: Import dashboard to Grafana
+  ansible.builtin.uri:
+    url: "{{ grafana_url }}/api/dashboards/import"
+    method: POST
+    headers:
+      Authorization: "Bearer {{ grafana_api_token }}"
+      Content-Type: "application/json"
+    body_format: json
+    body:
+      dashboard: "{{ dashboard_json }}"
+      overwrite: true
+      folderId: 0
+    status_code: [200]
+    validate_certs: true
+  register: grafana_import_result
+
+- name: Show dashboard URL
+  ansible.builtin.debug:
+    msg: "Dashboard imported: {{ grafana_url }}{{ grafana_import_result.json.url }}"

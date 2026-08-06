@@ -1,0 +1,51 @@
+---
+# Provision both Prometheus datasources in Grafana via the HTTP API.
+# Idempotent: uses POST /api/datasources — Grafana returns 409 if name exists; we treat that as OK.
+
+- name: Provision Site 1 Prometheus datasource
+  ansible.builtin.uri:
+    url: "{{ grafana_url }}/api/datasources"
+    method: POST
+    headers:
+      Authorization: "Bearer {{ grafana_api_token }}"
+      Content-Type: "application/json"
+    body_format: json
+    body:
+      name: "AAP Site 1"
+      type: "prometheus"
+      access: "proxy"
+      url: "https://{{ thanos_querier_site_one }}"
+      basicAuth: false
+      jsonData:
+        httpMethod: "GET"
+        httpHeaderName1: "Authorization"
+      secureJsonData:
+        httpHeaderValue1: "Bearer {{ thanos_bearer_token_site_one }}"
+      isDefault: false
+      editable: true
+    status_code: [200, 201, 409]
+    validate_certs: true
+
+- name: Provision Site 2 Prometheus datasource
+  ansible.builtin.uri:
+    url: "{{ grafana_url }}/api/datasources"
+    method: POST
+    headers:
+      Authorization: "Bearer {{ grafana_api_token }}"
+      Content-Type: "application/json"
+    body_format: json
+    body:
+      name: "AAP Site 2"
+      type: "prometheus"
+      access: "proxy"
+      url: "https://{{ thanos_querier_site_two }}"
+      basicAuth: false
+      jsonData:
+        httpMethod: "GET"
+        httpHeaderName1: "Authorization"
+      secureJsonData:
+        httpHeaderValue1: "Bearer {{ thanos_bearer_token_site_two }}"
+      isDefault: false
+      editable: true
+    status_code: [200, 201, 409]
+    validate_certs: true

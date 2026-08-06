@@ -1,0 +1,109 @@
+---
+# Provision cross-site Grafana alert rules.
+# Uses Grafana Unified Alerting ruler API — requires Grafana 9+ with unified alerting enabled.
+#
+# The datasourceUid values below use Ansible variables (grafana_ds_uid_site1 / grafana_ds_uid_site2).
+# Retrieve the UIDs after provision_datasources runs:
+#
+#   SITE1_UID=$(curl -s -H "Authorization: Bearer $GRAFANA_TOKEN" \
+#     $GRAFANA_URL/api/datasources/name/AAP%20Site%201 | python3 -c "import sys,json; print(json.load(sys.stdin)['uid'])")
+#   SITE2_UID=$(curl -s -H "Authorization: Bearer $GRAFANA_TOKEN" \
+#     $GRAFANA_URL/api/datasources/name/AAP%20Site%202 | python3 -c "import sys,json; print(json.load(sys.stdin)['uid'])")
+#
+# Then pass them as extra vars:
+#   ansible-playbook playbooks/deploy_dashboard/deploy_dashboard.yml \
+#     -e grafana_ds_uid_site1=$SITE1_UID \
+#     -e grafana_ds_uid_site2=$SITE2_UID \
+#     ...
+
+- name: Create alert rule group for cross-site AAP alerts
+  ansible.builtin.uri:
+    url: "{{ grafana_url }}/api/ruler/grafana/api/v1/rules/AAP%20Multisite"
+    method: POST
+    headers:
+      Authorization: "Bearer {{ grafana_api_token }}"
+      Content-Type: "application/json"
+    body_format: json
+    body:
+      name: "aap-cross-site-alerts"
+      interval: "1m"
+      rules:
+        - grafana_alert:
+            title: "AAPSiteSplitBrain"
+            condition: "C"
+            no_data_state: "NoData"
+            exec_err_state: "Error"
+            for: "1m"
+            labels:
+              severity: "critical"
+            annotations:
+              summary: "Both AAP sites report as primary (split-brain)"
+              description: >
+                Both Site 1 and Site 2 report aap_site_in_recovery=0.
+                Two PostgreSQL primaries may be active simultaneously.
+            data:
+              - refId: "A"
+                datasourceUid: "{{ grafana_ds_uid_site1 }}"
+                model:
+                  expr: "aap_site_in_recovery"
+                  instant: true
+                  refId: "A"
+                relativeTimeRange:
+                  from: 300
+                  to: 0
+              - refId: "B"
+                datasourceUid: "{{ grafana_ds_uid_site2 }}"
+                model:
+                  expr: "aap_site_in_recovery"
+                  instant: true
+                  refId: "B"
+                relativeTimeRange:
+                  from: 300
+                  to: 0
+              - refId: "C"
+                datasourceUid: "__expr__"
+                model:
+                  type: "math"
+                  expression: "$A == 0 && $B == 0"
+                  refId: "C"
+
+        - grafana_alert:
+            title: "AAPNoPrimary"
+            condition: "C"
+            no_data_state: "NoData"
+            exec_err_state: "Error"
+            for: "1m"
+            labels:
+              severity: "critical"
+            annotations:
+              summary: "No AAP site is active (no primary)"
+              description: >
+                Both Site 1 and Site 2 report aap_site_in_recovery=1.
+                No PostgreSQL primary is currently active.
+            data:
+              - refId: "A"
+                datasourceUid: "{{ grafana_ds_uid_site1 }}"
+                model:
+                  expr: "aap_site_in_recovery"
+                  instant: true
+                  refId: "A"
+                relativeTimeRange:
+                  from: 300
+                  to: 0
+              - refId: "B"
+                datasourceUid: "{{ grafana_ds_uid_site2 }}"
+                model:
+                  expr: "aap_site_in_recovery"
+                  instant: true
+                  refId: "B"
+                relativeTimeRange:
+                  from: 300
+                  to: 0
+              - refId: "C"
+                datasourceUid: "__expr__"
+                model:
+                  type: "math"
+                  expression: "$A == 1 && $B == 1"
+                  refId: "C"
+    status_code: [202]
+    validate_certs: true

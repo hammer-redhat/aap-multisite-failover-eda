@@ -108,7 +108,7 @@ grafana_url: "https://grafana.example.com"
 grafana_api_token: ""  # Grafana service account token with Editor role
 
 # postgres_check container image (must match the image used in openshift-deployment.example.yaml)
-postgres_check_image: "quay.io/chrhamme/postgres-check:v3"
+postgres_check_image: "quay.io/chrhamme/postgres-check:v4"
 
 # OCP Thanos Querier endpoints — accessible from the Grafana host
 # Find via: oc -n openshift-monitoring get route thanos-querier -o jsonpath='{.spec.host}'

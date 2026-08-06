@@ -33,4 +33,4 @@
 
 - name: Show dashboard URL
   ansible.builtin.debug:
-    msg: "Dashboard imported: {{ grafana_url }}{{ grafana_import_result.json.url }}"
+    msg: "Dashboard imported: {{ grafana_url }}{{ grafana_import_result.json.importedUrl }}"

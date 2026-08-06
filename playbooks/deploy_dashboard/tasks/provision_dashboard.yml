@@ -18,6 +18,15 @@
       dashboard: "{{ dashboard_json }}"
       overwrite: true
       folderId: 0
+      inputs:
+        - name: "DS_SITE1"
+          type: "datasource"
+          pluginId: "prometheus"
+          value: "{{ grafana_ds_uid_site1 }}"
+        - name: "DS_SITE2"
+          type: "datasource"
+          pluginId: "prometheus"
+          value: "{{ grafana_ds_uid_site2 }}"
     status_code: [200]
     validate_certs: true
   register: grafana_import_result

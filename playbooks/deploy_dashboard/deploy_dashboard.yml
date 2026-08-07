@@ -11,6 +11,12 @@
 #   ansible-playbook playbooks/deploy_dashboard/deploy_dashboard.yml \
 #     -e k8s_context_site_one=<ctx> -e k8s_context_site_two=<ctx>
 #
+# Tags for partial runs:
+#   --tags ocp      Apply OCP manifests to both sites (Deployment, Service, ServiceMonitor, etc.)
+#   --tags site1    Apply OCP manifests to Site 1 only
+#   --tags site2    Apply OCP manifests to Site 2 only
+#   --tags grafana  Provision Grafana datasources, dashboard, and alert rules only
+#
 # Or set KUBECONFIG to a merged kubeconfig and pass context names via extra vars.
 
 - name: Apply OCP manifests to Site 1
@@ -22,6 +28,7 @@
     site_namespace: "{{ namespace_site_one }}"
     site_label: "{{ site_label_one }}"
     pg_check_db_host: "{{ db_host_site_one }}"
+  tags: [ocp, site1]
   tasks:
     - name: Apply monitoring manifests to site one
       ansible.builtin.include_tasks: tasks/apply_ocp_manifests.yml
@@ -37,6 +44,7 @@
     site_namespace: "{{ namespace_site_two }}"
     site_label: "{{ site_label_two }}"
     pg_check_db_host: "{{ db_host_site_two }}"
+  tags: [ocp, site2]
   tasks:
     - name: Apply monitoring manifests to site two
       ansible.builtin.include_tasks: tasks/apply_ocp_manifests.yml
@@ -48,6 +56,7 @@
   gather_facts: false
   vars_files:
     - "../../vars/main.yml"
+  tags: [grafana]
   tasks:
     - name: Provision datasources
       ansible.builtin.include_tasks: tasks/provision_datasources.yml

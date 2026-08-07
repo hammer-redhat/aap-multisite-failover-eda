@@ -25,3 +25,22 @@
     state: present
     context: "{{ k8s_context | default(omit) }}"
     definition: "{{ lookup('ansible.builtin.template', '../../files/monitoring/prometheus-rule.yml') | from_yaml }}"
+
+- name: Grant prometheus-k8s service discovery access in site namespace
+  kubernetes.core.k8s:
+    state: present
+    context: "{{ k8s_context | default(omit) }}"
+    definition:
+      apiVersion: rbac.authorization.k8s.io/v1
+      kind: RoleBinding
+      metadata:
+        name: prometheus-k8s-metrics-access
+        namespace: "{{ site_namespace }}"
+      roleRef:
+        apiGroup: rbac.authorization.k8s.io
+        kind: ClusterRole
+        name: view
+      subjects:
+        - kind: ServiceAccount
+          name: prometheus-k8s
+          namespace: openshift-monitoring

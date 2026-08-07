@@ -175,10 +175,12 @@ Deploys Python postgres check scripts and configures cron jobs on bastion or DB 
 
 Deploys a Prometheus metrics sidecar to both clusters and provisions a centralized Grafana instance with a side-by-side view of both sites' health, active/passive status, and failover history.
 
+![AAP Multisite Observability Dashboard](screenshots/dashboard.png)
+
 | File | Purpose |
 |------|---------|
 | `deploy_dashboard.yml` | Top-level playbook — applies OCP manifests then provisions Grafana |
-| `tasks/apply_ocp_manifests.yml` | Applies `aap-site-metrics` Deployment, Service, ServiceMonitor, and PrometheusRule to one cluster |
+| `tasks/apply_ocp_manifests.yml` | Creates `postgres-check-db` Secret, applies `aap-site-metrics` Deployment, Service, ServiceMonitor, PrometheusRule, and RBAC to one cluster |
 | `tasks/provision_datasources.yml` | Creates two Prometheus datasources in Grafana (one per cluster's Thanos Querier) |
 | `tasks/provision_dashboard.yml` | Imports `files/grafana/dashboard.json` into Grafana |
 | `tasks/provision_alerts.yml` | Creates cross-site Grafana alert rules (`AAPSiteSplitBrain`, `AAPNoPrimary`) |
@@ -364,7 +366,7 @@ In each copy, update these fields:
 | `WEBHOOK_URL` | `postgres-check-webhook` Secret | EDA Event Stream URL for this site (from step 6) |
 | `AUTH_TOKEN` | `postgres-check-webhook` Secret | EDA Event Stream token for this site (from step 6) |
 | `DB_CONFIG` | `postgres-check-db` Secret | JSON object with this site's gateway DB credentials (see below) |
-| `image:` | Job and CronJob `containers` spec | Replace `quay.io/chrhamme/postgres-check:v3` with your pushed image |
+| `image:` | Job and CronJob `containers` spec | Replace `quay.io/chrhamme/postgres-check:v4` with your pushed image |
 | `schedule:` | CronJob spec | `"* * * * *"` runs every minute; use `"*/5 * * * *"` for production |
 
 **`DB_CONFIG` format** — maps directly to variables in `vars/main.yml`:
@@ -400,9 +402,10 @@ Provisions the `aap-site-metrics` Deployment on both clusters (Prometheus metric
 **Prerequisites:**
 
 - OCP User Workload Monitoring enabled on both clusters (`enableUserWorkload: true` in the `cluster-monitoring-config` ConfigMap)
-- `postgres-check-db` Secret already deployed in each AAP namespace (from step 7)
 - A Grafana service account token with Editor role for your Grafana instance
 - An OCP Service Account token with `cluster-monitoring-view` role on each cluster for Thanos Querier access
+
+> **Note:** The `postgres-check-db` Secret is created automatically by the playbook from your `vars/main.yml` values — no pre-population required.
 
 **Add these variables to `vars/main.yml`** (see `vars/main.yml.example` for full descriptions):
 
@@ -410,7 +413,7 @@ Provisions the `aap-site-metrics` Deployment on both clusters (Prometheus metric
 |----------|-------------|
 | `grafana_url` | Base URL of your Grafana instance, e.g. `https://grafana.example.com` |
 | `grafana_api_token` | Grafana service account token (Editor role) |
-| `postgres_check_image` | Container image to use, e.g. `quay.io/chrhamme/postgres-check:v3` |
+| `postgres_check_image` | Container image to use, e.g. `quay.io/chrhamme/postgres-check:v4` |
 | `thanos_querier_site_one` | Thanos Querier hostname for Site 1 (no scheme, no port) |
 | `thanos_querier_site_two` | Thanos Querier hostname for Site 2 (no scheme, no port) |
 | `thanos_bearer_token_site_one` | OCP SA token with `cluster-monitoring-view` on Site 1 |
@@ -439,6 +442,24 @@ ansible-playbook playbooks/deploy_dashboard/deploy_dashboard.yml \
 ```
 
 The playbook applies OCP manifests to both clusters, then provisions the Grafana datasources, dashboard (uid: `aap-multisite-obs`), and cross-site alert rules (`AAPSiteSplitBrain`, `AAPNoPrimary`) in one run.
+
+**Partial runs** — use tags to re-run only the parts you need:
+
+```bash
+# Re-provision Grafana only (e.g. after rotating a bearer token or adding a new datasource)
+ansible-playbook playbooks/deploy_dashboard/deploy_dashboard.yml --tags grafana
+
+# Apply OCP manifests to Site 2 only (e.g. after initial Site 2 cluster setup)
+ansible-playbook playbooks/deploy_dashboard/deploy_dashboard.yml --tags site2 \
+  -e k8s_context_site_two=<your-site2-kubeconfig-context>
+```
+
+| Tag | Scope |
+|-----|-------|
+| `ocp` | Apply OCP manifests to both sites |
+| `site1` | Apply OCP manifests to Site 1 only |
+| `site2` | Apply OCP manifests to Site 2 only |
+| `grafana` | Provision Grafana datasources, dashboard, and alert rules only |
 
 **Verify:**
 

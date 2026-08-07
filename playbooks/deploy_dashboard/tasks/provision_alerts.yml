@@ -5,7 +5,17 @@
 # The datasourceUid values below use Ansible variables (grafana_ds_uid_site1 / grafana_ds_uid_site2)
 # that are set automatically by provision_datasources.yml.
 
-- name: Create or retrieve AAP Multisite folder
+- name: Check if AAP Multisite folder already exists
+  ansible.builtin.uri:
+    url: "{{ grafana_url }}/api/folders/aap-multisite"
+    method: GET
+    headers:
+      Authorization: "Bearer {{ grafana_api_token }}"
+    status_code: [200, 404]
+    validate_certs: true
+  register: grafana_folder_check
+
+- name: Create AAP Multisite folder (stable UID)
   ansible.builtin.uri:
     url: "{{ grafana_url }}/api/folders"
     method: POST
@@ -14,30 +24,15 @@
       Content-Type: "application/json"
     body_format: json
     body:
+      uid: "aap-multisite"
       title: "AAP Multisite"
-    status_code: [200, 412]
-    validate_certs: true
-  register: grafana_folder_result
-
-- name: Fetch existing AAP Multisite folder UID (if already exists)
-  ansible.builtin.uri:
-    url: "{{ grafana_url }}/api/folders?query=AAP+Multisite&limit=1"
-    method: GET
-    headers:
-      Authorization: "Bearer {{ grafana_api_token }}"
     status_code: [200]
     validate_certs: true
-  register: grafana_folder_lookup
-  when: grafana_folder_result.status == 412
+  when: grafana_folder_check.status == 404
 
 - name: Set alert folder UID
   ansible.builtin.set_fact:
-    grafana_alert_folder_uid: >-
-      {{
-        grafana_folder_result.json.uid
-        if grafana_folder_result.status == 200
-        else grafana_folder_lookup.json[0].uid
-      }}
+    grafana_alert_folder_uid: "aap-multisite"
 
 - name: Create alert rule group for cross-site AAP alerts
   ansible.builtin.uri:

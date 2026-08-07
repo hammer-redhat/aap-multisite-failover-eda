@@ -18,6 +18,7 @@
 - name: Apply aap-site-metrics Deployment
   kubernetes.core.k8s:
     state: present
+    apply: true
     context: "{{ k8s_context | default(omit) }}"
     definition: "{{ lookup('ansible.builtin.template', '../../files/monitoring/metrics-deployment.yml') | from_yaml }}"
 

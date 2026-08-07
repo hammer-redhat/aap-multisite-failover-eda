@@ -1,6 +1,19 @@
 ---
 # Apply OCP monitoring manifests to one site.
-# Expected vars: site_namespace, site_label, postgres_check_image
+# Expected vars: site_namespace, site_label, postgres_check_image, pg_check_db_host
+
+- name: Create postgres-check-db secret
+  kubernetes.core.k8s:
+    state: present
+    context: "{{ k8s_context | default(omit) }}"
+    definition:
+      apiVersion: v1
+      kind: Secret
+      metadata:
+        name: postgres-check-db
+        namespace: "{{ site_namespace }}"
+      stringData:
+        DB_CONFIG: "{{ {'host': pg_check_db_host, 'port': (db_port | default('5432')) | int, 'dbname': db_name_controller | default('postgres'), 'user': postgres_admin_user, 'password': postgres_admin_password} | to_json }}"
 
 - name: Apply aap-site-metrics Deployment
   kubernetes.core.k8s:

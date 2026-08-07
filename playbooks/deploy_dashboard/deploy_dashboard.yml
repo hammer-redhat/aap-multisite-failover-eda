@@ -21,6 +21,7 @@
   vars:
     site_namespace: "{{ namespace_site_one }}"
     site_label: "{{ site_label_one }}"
+    pg_check_db_host: "{{ db_host_site_one }}"
   tasks:
     - name: Apply monitoring manifests to site one
       ansible.builtin.include_tasks: tasks/apply_ocp_manifests.yml
@@ -35,6 +36,7 @@
   vars:
     site_namespace: "{{ namespace_site_two }}"
     site_label: "{{ site_label_two }}"
+    pg_check_db_host: "{{ db_host_site_two }}"
   tasks:
     - name: Apply monitoring manifests to site two
       ansible.builtin.include_tasks: tasks/apply_ocp_manifests.yml

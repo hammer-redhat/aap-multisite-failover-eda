@@ -30,8 +30,6 @@
     pg_check_db_host: "{{ db_host_site_one }}"
     gateway_url: "{{ gateway_url_site_one | default('') }}"
     gateway_password: "{{ gateway_password_site_one | default(aap_admin_password | default('')) }}"
-    gateway_user: "{{ gateway_user | default('admin') }}"
-    gateway_ssl_verify: "{{ gateway_ssl_verify | default('false') }}"
   tags: [ocp, site1]
   tasks:
     - name: Apply monitoring manifests to site one
@@ -50,8 +48,6 @@
     pg_check_db_host: "{{ db_host_site_two }}"
     gateway_url: "{{ gateway_url_site_two | default('') }}"
     gateway_password: "{{ gateway_password_site_two | default(aap_admin_password | default('')) }}"
-    gateway_user: "{{ gateway_user | default('admin') }}"
-    gateway_ssl_verify: "{{ gateway_ssl_verify | default('false') }}"
   tags: [ocp, site2]
   tasks:
     - name: Apply monitoring manifests to site two

@@ -366,7 +366,7 @@ In each copy, update these fields:
 | `WEBHOOK_URL` | `postgres-check-webhook` Secret | EDA Event Stream URL for this site (from step 6) |
 | `AUTH_TOKEN` | `postgres-check-webhook` Secret | EDA Event Stream token for this site (from step 6) |
 | `DB_CONFIG` | `postgres-check-db` Secret | JSON object with this site's gateway DB credentials (see below) |
-| `image:` | Job and CronJob `containers` spec | Replace `quay.io/chrhamme/postgres-check:v4` with your pushed image |
+| `image:` | Job and CronJob `containers` spec | Replace `quay.io/chrhamme/postgres-check:v5` with your pushed image |
 | `schedule:` | CronJob spec | `"* * * * *"` runs every minute; use `"*/5 * * * *"` for production |
 
 **`DB_CONFIG` format** — maps directly to variables in `vars/main.yml`:
@@ -413,7 +413,7 @@ Provisions the `aap-site-metrics` Deployment on both clusters (Prometheus metric
 |----------|-------------|
 | `grafana_url` | Base URL of your Grafana instance, e.g. `https://grafana.example.com` |
 | `grafana_api_token` | Grafana service account token (Editor role) |
-| `postgres_check_image` | Container image to use, e.g. `quay.io/chrhamme/postgres-check:v4` |
+| `postgres_check_image` | Container image to use, e.g. `quay.io/chrhamme/postgres-check:v5` |
 | `thanos_querier_site_one` | Thanos Querier hostname for Site 1 (no scheme, no port) |
 | `thanos_querier_site_two` | Thanos Querier hostname for Site 2 (no scheme, no port) |
 | `thanos_bearer_token_site_one` | OCP SA token with `cluster-monitoring-view` on Site 1 |

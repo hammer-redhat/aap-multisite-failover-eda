@@ -11,6 +11,10 @@ MODE=metrics
   Required env: DB_CONFIG or PG* vars.
   Optional env: SITE_LABEL (default: "unknown"), METRICS_PORT (default: 8080),
                 CHECK_INTERVAL (default: 60).
+  Optional env (AAP Gateway status):
+                GATEWAY_URL (e.g. https://aap.example.com), GATEWAY_USER (default: admin),
+                GATEWAY_PASSWORD, GATEWAY_SSL_VERIFY (default: true).
+                If GATEWAY_URL is unset the gateway metrics are skipped.
 
 Database config (both modes) — either:
   DB_CONFIG   JSON object: {"host","port","dbname","user","password"}
@@ -91,6 +95,52 @@ _METRIC_DURATION = Gauge(
     "Wall-clock time of the last DB query in seconds",
     ["site"],
 )
+_METRIC_GATEWAY_OVERALL = Gauge(
+    "aap_gateway_overall_status",
+    "1 if the AAP Gateway is reachable and reports overall good status, 0 otherwise",
+    ["site"],
+)
+_METRIC_GATEWAY_SERVICE = Gauge(
+    "aap_gateway_service_status",
+    "1 if the named AAP Gateway service reports good status, 0 otherwise",
+    ["site", "service_name"],
+)
+
+
+def _load_gateway_config() -> dict | None:
+    """Return gateway config dict, or None if GATEWAY_URL is not set."""
+    url = os.environ.get("GATEWAY_URL", "").strip()
+    if not url:
+        return None
+    return {
+        "url": url.rstrip("/"),
+        "user": os.environ.get("GATEWAY_USER", "admin").strip(),
+        "password": os.environ.get("GATEWAY_PASSWORD", ""),
+        "verify_ssl": _env_bool("GATEWAY_SSL_VERIFY", True),
+    }
+
+
+def _check_gateway_status(gw_config: dict, site: str) -> None:
+    """Poll /api/gateway/v1/status/ and update Prometheus gauges."""
+    try:
+        resp = requests.get(
+            f"{gw_config['url']}/api/gateway/v1/status/",
+            auth=(gw_config["user"], gw_config["password"]),
+            timeout=30,
+            verify=gw_config["verify_ssl"],
+        )
+        resp.raise_for_status()
+        data = resp.json()
+        overall_good = data.get("status", "") == "good"
+        _METRIC_GATEWAY_OVERALL.labels(site=site).set(1 if overall_good else 0)
+        for svc in data.get("services", []):
+            svc_name = svc.get("service_name", "unknown")
+            svc_good = svc.get("status", "") == "good"
+            _METRIC_GATEWAY_SERVICE.labels(site=site, service_name=svc_name).set(
+                1 if svc_good else 0
+            )
+    except Exception:
+        _METRIC_GATEWAY_OVERALL.labels(site=site).set(0)
 
 
 def _run_single_check(db_config: dict) -> tuple:
@@ -121,6 +171,7 @@ def run_metrics_loop(db_config: dict, interval: int = 60) -> None:
     known-good value is preserved for alerting continuity.
     """
     site = os.environ.get("SITE_LABEL", "unknown")
+    gw_config = _load_gateway_config()
     while True:
         in_recovery, success, duration, _ = _run_single_check(db_config)
         _METRIC_CHECK_SUCCESS.labels(site=site).set(1 if success else 0)
@@ -128,6 +179,8 @@ def run_metrics_loop(db_config: dict, interval: int = 60) -> None:
         _METRIC_LAST_RUN_TS.labels(site=site).set(time.time())
         if success:
             _METRIC_IN_RECOVERY.labels(site=site).set(1 if in_recovery else 0)
+        if gw_config:
+            _check_gateway_status(gw_config, site)
         time.sleep(interval)
 
 

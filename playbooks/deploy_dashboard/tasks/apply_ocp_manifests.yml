@@ -15,6 +15,23 @@
       stringData:
         DB_CONFIG: "{{ {'host': pg_check_db_host, 'port': (db_port | default('5432')) | int, 'dbname': db_name_controller | default('postgres'), 'user': postgres_admin_user, 'password': postgres_admin_password} | to_json }}"
 
+- name: Create postgres-check-gateway secret
+  kubernetes.core.k8s:
+    state: present
+    context: "{{ k8s_context | default(omit) }}"
+    definition:
+      apiVersion: v1
+      kind: Secret
+      metadata:
+        name: postgres-check-gateway
+        namespace: "{{ site_namespace }}"
+      stringData:
+        GATEWAY_URL: "{{ gateway_url }}"
+        GATEWAY_USER: "{{ gateway_user | default('admin') }}"
+        GATEWAY_PASSWORD: "{{ gateway_password }}"
+        GATEWAY_SSL_VERIFY: "{{ gateway_ssl_verify | default('true') }}"
+  when: gateway_url is defined and gateway_url | length > 0
+
 - name: Apply aap-site-metrics Deployment
   kubernetes.core.k8s:
     state: present

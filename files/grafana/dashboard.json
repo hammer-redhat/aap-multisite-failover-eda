@@ -14,20 +14,51 @@
     }
   ],
   "__requires": [
-    {"type": "grafana", "id": "grafana", "name": "Grafana", "version": "10.0.0"},
-    {"type": "datasource", "id": "prometheus", "name": "Prometheus", "version": "1.0.0"},
-    {"type": "panel", "id": "stat", "name": "Stat", "version": ""},
-    {"type": "panel", "id": "gauge", "name": "Gauge", "version": ""},
-    {"type": "panel", "id": "timeseries", "name": "Time series", "version": ""}
+    {
+      "type": "grafana",
+      "id": "grafana",
+      "name": "Grafana",
+      "version": "10.0.0"
+    },
+    {
+      "type": "datasource",
+      "id": "prometheus",
+      "name": "Prometheus",
+      "version": "1.0.0"
+    },
+    {
+      "type": "panel",
+      "id": "stat",
+      "name": "Stat",
+      "version": ""
+    },
+    {
+      "type": "panel",
+      "id": "gauge",
+      "name": "Gauge",
+      "version": ""
+    },
+    {
+      "type": "panel",
+      "id": "timeseries",
+      "name": "Time series",
+      "version": ""
+    }
   ],
-  "annotations": {"list": []},
+  "annotations": {
+    "list": []
+  },
   "editable": true,
   "graphTooltip": 1,
   "id": null,
   "links": [],
   "refresh": "30s",
   "schemaVersion": 38,
-  "tags": ["aap", "multisite", "observability"],
+  "tags": [
+    "aap",
+    "multisite",
+    "observability"
+  ],
   "templating": {
     "list": [
       {
@@ -55,7 +86,9 @@
         "type": "datasource"
       },
       {
-        "current": {"value": "aap-26"},
+        "current": {
+          "value": "aap-26"
+        },
         "hide": 0,
         "label": "Site 1 Namespace",
         "name": "ns_site1",
@@ -63,7 +96,9 @@
         "type": "textbox"
       },
       {
-        "current": {"value": "aap-26-dr"},
+        "current": {
+          "value": "aap-26-dr"
+        },
         "hide": 0,
         "label": "Site 2 Namespace",
         "name": "ns_site2",
@@ -72,329 +107,982 @@
       }
     ]
   },
-  "time": {"from": "now-6h", "to": "now"},
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
   "timepicker": {},
   "timezone": "browser",
   "title": "AAP Multisite Observability",
   "uid": "aap-multisite-obs",
-  "version": 1,
+  "version": 2,
   "panels": [
     {
       "id": 1,
       "type": "row",
       "title": "Site Status",
       "collapsed": false,
-      "gridPos": {"h": 1, "w": 24, "x": 0, "y": 0}
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      }
     },
     {
       "id": 2,
       "type": "stat",
       "title": "Site 1 Role",
-      "datasource": {"type": "prometheus", "uid": "${datasource_site1}"},
-      "targets": [{
-        "expr": "aap_site_in_recovery",
-        "instant": true,
-        "legendFormat": ""
-      }],
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource_site1}"
+      },
+      "targets": [
+        {
+          "expr": "aap_site_in_recovery",
+          "instant": true,
+          "legendFormat": ""
+        }
+      ],
       "fieldConfig": {
         "defaults": {
-          "mappings": [{
-            "type": "value",
-            "options": {
-              "0": {"text": "ACTIVE", "color": "green", "index": 0},
-              "1": {"text": "PASSIVE", "color": "yellow", "index": 1}
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "0": {
+                  "text": "ACTIVE",
+                  "color": "green",
+                  "index": 0
+                },
+                "1": {
+                  "text": "PASSIVE",
+                  "color": "yellow",
+                  "index": 1
+                }
+              }
             }
-          }],
-          "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}]},
-          "color": {"mode": "thresholds"}
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          }
         }
       },
-      "options": {"reduceOptions": {"calcs": ["lastNotNull"]}, "orientation": "auto", "textMode": "auto", "colorMode": "background"},
-      "gridPos": {"h": 4, "w": 6, "x": 0, "y": 1}
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "orientation": "auto",
+        "textMode": "auto",
+        "colorMode": "background"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 0,
+        "y": 1
+      }
     },
     {
       "id": 3,
       "type": "stat",
       "title": "Site 2 Role",
-      "datasource": {"type": "prometheus", "uid": "${datasource_site2}"},
-      "targets": [{
-        "expr": "aap_site_in_recovery",
-        "instant": true,
-        "legendFormat": ""
-      }],
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource_site2}"
+      },
+      "targets": [
+        {
+          "expr": "aap_site_in_recovery",
+          "instant": true,
+          "legendFormat": ""
+        }
+      ],
       "fieldConfig": {
         "defaults": {
-          "mappings": [{
-            "type": "value",
-            "options": {
-              "0": {"text": "ACTIVE", "color": "green", "index": 0},
-              "1": {"text": "PASSIVE", "color": "yellow", "index": 1}
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "0": {
+                  "text": "ACTIVE",
+                  "color": "green",
+                  "index": 0
+                },
+                "1": {
+                  "text": "PASSIVE",
+                  "color": "yellow",
+                  "index": 1
+                }
+              }
             }
-          }],
-          "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}]},
-          "color": {"mode": "thresholds"}
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          }
         }
       },
-      "options": {"reduceOptions": {"calcs": ["lastNotNull"]}, "orientation": "auto", "textMode": "auto", "colorMode": "background"},
-      "gridPos": {"h": 4, "w": 6, "x": 6, "y": 1}
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "orientation": "auto",
+        "textMode": "auto",
+        "colorMode": "background"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 6,
+        "y": 1
+      }
     },
     {
       "id": 4,
       "type": "stat",
       "title": "Site 1 Check Success",
-      "datasource": {"type": "prometheus", "uid": "${datasource_site1}"},
-      "targets": [{
-        "expr": "aap_pg_check_success",
-        "instant": true,
-        "legendFormat": ""
-      }],
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource_site1}"
+      },
+      "targets": [
+        {
+          "expr": "aap_pg_check_success",
+          "instant": true,
+          "legendFormat": ""
+        }
+      ],
       "fieldConfig": {
         "defaults": {
-          "mappings": [{
-            "type": "value",
-            "options": {
-              "0": {"text": "FAILING", "color": "red", "index": 0},
-              "1": {"text": "OK", "color": "green", "index": 1}
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "0": {
+                  "text": "FAILING",
+                  "color": "red",
+                  "index": 0
+                },
+                "1": {
+                  "text": "OK",
+                  "color": "green",
+                  "index": 1
+                }
+              }
             }
-          }],
-          "color": {"mode": "thresholds"},
-          "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}]}
+          ],
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
         }
       },
-      "options": {"reduceOptions": {"calcs": ["lastNotNull"]}, "colorMode": "background"},
-      "gridPos": {"h": 4, "w": 6, "x": 12, "y": 1}
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "colorMode": "background"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 12,
+        "y": 1
+      }
     },
     {
       "id": 5,
       "type": "stat",
       "title": "Site 2 Check Success",
-      "datasource": {"type": "prometheus", "uid": "${datasource_site2}"},
-      "targets": [{
-        "expr": "aap_pg_check_success",
-        "instant": true,
-        "legendFormat": ""
-      }],
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource_site2}"
+      },
+      "targets": [
+        {
+          "expr": "aap_pg_check_success",
+          "instant": true,
+          "legendFormat": ""
+        }
+      ],
       "fieldConfig": {
         "defaults": {
-          "mappings": [{
-            "type": "value",
-            "options": {
-              "0": {"text": "FAILING", "color": "red", "index": 0},
-              "1": {"text": "OK", "color": "green", "index": 1}
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "0": {
+                  "text": "FAILING",
+                  "color": "red",
+                  "index": 0
+                },
+                "1": {
+                  "text": "OK",
+                  "color": "green",
+                  "index": 1
+                }
+              }
             }
-          }],
-          "color": {"mode": "thresholds"},
-          "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}]}
+          ],
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
         }
       },
-      "options": {"reduceOptions": {"calcs": ["lastNotNull"]}, "colorMode": "background"},
-      "gridPos": {"h": 4, "w": 6, "x": 18, "y": 1}
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "colorMode": "background"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 18,
+        "y": 1
+      }
     },
     {
       "id": 6,
       "type": "row",
       "title": "Failover Events",
       "collapsed": false,
-      "gridPos": {"h": 1, "w": 24, "x": 0, "y": 5}
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 5
+      }
     },
     {
       "id": 7,
       "type": "timeseries",
       "title": "DB Role Over Time (0=Active, 1=Passive)",
-      "datasource": {"type": "prometheus", "uid": "${datasource_site1}"},
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource_site1}"
+      },
       "targets": [
         {
-          "datasource": {"type": "prometheus", "uid": "${datasource_site1}"},
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource_site1}"
+          },
           "expr": "aap_site_in_recovery",
           "legendFormat": "Site 1"
         },
         {
-          "datasource": {"type": "prometheus", "uid": "${datasource_site2}"},
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource_site2}"
+          },
           "expr": "aap_site_in_recovery",
           "legendFormat": "Site 2"
         }
       ],
       "fieldConfig": {
         "defaults": {
-          "custom": {"lineWidth": 2, "fillOpacity": 10},
+          "custom": {
+            "lineWidth": 2,
+            "fillOpacity": 10
+          },
           "min": 0,
           "max": 1,
           "mappings": [
-            {"type": "value", "options": {"0": {"text": "Active"}, "1": {"text": "Passive"}}}
+            {
+              "type": "value",
+              "options": {
+                "0": {
+                  "text": "Active"
+                },
+                "1": {
+                  "text": "Passive"
+                }
+              }
+            }
           ]
         }
       },
-      "options": {"tooltip": {"mode": "multi"}},
-      "gridPos": {"h": 8, "w": 24, "x": 0, "y": 6}
+      "options": {
+        "tooltip": {
+          "mode": "multi"
+        }
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 6
+      }
     },
     {
       "id": 8,
       "type": "row",
       "title": "DB Check Health",
       "collapsed": false,
-      "gridPos": {"h": 1, "w": 24, "x": 0, "y": 14}
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 14
+      }
     },
     {
       "id": 9,
       "type": "timeseries",
       "title": "Check Duration (seconds)",
-      "datasource": {"type": "prometheus", "uid": "${datasource_site1}"},
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource_site1}"
+      },
       "targets": [
         {
-          "datasource": {"type": "prometheus", "uid": "${datasource_site1}"},
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource_site1}"
+          },
           "expr": "aap_pg_check_duration_seconds",
           "legendFormat": "Site 1"
         },
         {
-          "datasource": {"type": "prometheus", "uid": "${datasource_site2}"},
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource_site2}"
+          },
           "expr": "aap_pg_check_duration_seconds",
           "legendFormat": "Site 2"
         }
       ],
-      "fieldConfig": {"defaults": {"unit": "s"}},
-      "gridPos": {"h": 6, "w": 12, "x": 0, "y": 15}
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s"
+        }
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 12,
+        "x": 0,
+        "y": 15
+      }
     },
     {
       "id": 10,
       "type": "stat",
       "title": "Site 1 Last Check Timestamp",
-      "datasource": {"type": "prometheus", "uid": "${datasource_site1}"},
-      "targets": [{
-        "expr": "aap_pg_check_last_run_timestamp_seconds * 1000",
-        "instant": true,
-        "legendFormat": ""
-      }],
-      "fieldConfig": {"defaults": {"unit": "dateTimeFromNow"}},
-      "options": {"reduceOptions": {"calcs": ["lastNotNull"]}},
-      "gridPos": {"h": 6, "w": 6, "x": 12, "y": 15}
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource_site1}"
+      },
+      "targets": [
+        {
+          "expr": "aap_pg_check_last_run_timestamp_seconds * 1000",
+          "instant": true,
+          "legendFormat": ""
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "dateTimeFromNow"
+        }
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        }
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 6,
+        "x": 12,
+        "y": 15
+      }
     },
     {
       "id": 11,
       "type": "stat",
       "title": "Site 2 Last Check Timestamp",
-      "datasource": {"type": "prometheus", "uid": "${datasource_site2}"},
-      "targets": [{
-        "expr": "aap_pg_check_last_run_timestamp_seconds * 1000",
-        "instant": true,
-        "legendFormat": ""
-      }],
-      "fieldConfig": {"defaults": {"unit": "dateTimeFromNow"}},
-      "options": {"reduceOptions": {"calcs": ["lastNotNull"]}},
-      "gridPos": {"h": 6, "w": 6, "x": 18, "y": 15}
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource_site2}"
+      },
+      "targets": [
+        {
+          "expr": "aap_pg_check_last_run_timestamp_seconds * 1000",
+          "instant": true,
+          "legendFormat": ""
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "dateTimeFromNow"
+        }
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        }
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 6,
+        "x": 18,
+        "y": 15
+      }
     },
     {
       "id": 12,
       "type": "row",
       "title": "Pod Health",
       "collapsed": false,
-      "gridPos": {"h": 1, "w": 24, "x": 0, "y": 21}
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 21
+      }
     },
     {
       "id": 13,
       "type": "stat",
       "title": "Site 1 AAP Ready Pods",
-      "datasource": {"type": "prometheus", "uid": "${datasource_site1}"},
-      "targets": [{
-        "expr": "count(kube_pod_status_ready{namespace=\"$ns_site1\", condition=\"true\"})",
-        "instant": true,
-        "legendFormat": "Ready pods"
-      }],
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource_site1}"
+      },
+      "targets": [
+        {
+          "expr": "count(kube_pod_status_ready{namespace=\"$ns_site1\", condition=\"true\"})",
+          "instant": true,
+          "legendFormat": "Ready pods"
+        }
+      ],
       "fieldConfig": {
         "defaults": {
           "thresholds": {
             "mode": "absolute",
             "steps": [
-              {"color": "red", "value": null},
-              {"color": "yellow", "value": 1},
-              {"color": "green", "value": 4}
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 1
+              },
+              {
+                "color": "green",
+                "value": 4
+              }
             ]
           },
-          "color": {"mode": "thresholds"}
+          "color": {
+            "mode": "thresholds"
+          }
         }
       },
-      "options": {"reduceOptions": {"calcs": ["lastNotNull"]}, "colorMode": "background"},
-      "gridPos": {"h": 4, "w": 12, "x": 0, "y": 22}
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "colorMode": "background"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 12,
+        "x": 0,
+        "y": 22
+      }
     },
     {
       "id": 14,
       "type": "stat",
       "title": "Site 2 AAP Ready Pods",
-      "datasource": {"type": "prometheus", "uid": "${datasource_site2}"},
-      "targets": [{
-        "expr": "count(kube_pod_status_ready{namespace=\"$ns_site2\", condition=\"true\"})",
-        "instant": true,
-        "legendFormat": "Ready pods"
-      }],
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource_site2}"
+      },
+      "targets": [
+        {
+          "expr": "count(kube_pod_status_ready{namespace=\"$ns_site2\", condition=\"true\"})",
+          "instant": true,
+          "legendFormat": "Ready pods"
+        }
+      ],
       "fieldConfig": {
         "defaults": {
           "thresholds": {
             "mode": "absolute",
             "steps": [
-              {"color": "red", "value": null},
-              {"color": "yellow", "value": 1},
-              {"color": "green", "value": 4}
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 1
+              },
+              {
+                "color": "green",
+                "value": 4
+              }
             ]
           },
-          "color": {"mode": "thresholds"}
+          "color": {
+            "mode": "thresholds"
+          }
         }
       },
-      "options": {"reduceOptions": {"calcs": ["lastNotNull"]}, "colorMode": "background"},
-      "gridPos": {"h": 4, "w": 12, "x": 12, "y": 22}
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "colorMode": "background"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 12,
+        "x": 12,
+        "y": 22
+      }
     },
     {
       "id": 15,
       "type": "row",
       "title": "Resource Utilization",
       "collapsed": false,
-      "gridPos": {"h": 1, "w": 24, "x": 0, "y": 26}
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 26
+      }
     },
     {
       "id": 16,
       "type": "timeseries",
       "title": "Site 1 CPU Usage (cores)",
-      "datasource": {"type": "prometheus", "uid": "${datasource_site1}"},
-      "targets": [{
-        "expr": "sum(rate(container_cpu_usage_seconds_total{namespace=\"$ns_site1\", container!=\"\"}[5m])) by (pod)",
-        "legendFormat": "{{ pod }}"
-      }],
-      "fieldConfig": {"defaults": {"unit": "short"}},
-      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 27}
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource_site1}"
+      },
+      "targets": [
+        {
+          "expr": "sum(rate(container_cpu_usage_seconds_total{namespace=\"$ns_site1\", container!=\"\"}[5m])) by (pod)",
+          "legendFormat": "{{ pod }}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        }
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 27
+      }
     },
     {
       "id": 17,
       "type": "timeseries",
       "title": "Site 2 CPU Usage (cores)",
-      "datasource": {"type": "prometheus", "uid": "${datasource_site2}"},
-      "targets": [{
-        "expr": "sum(rate(container_cpu_usage_seconds_total{namespace=\"$ns_site2\", container!=\"\"}[5m])) by (pod)",
-        "legendFormat": "{{ pod }}"
-      }],
-      "fieldConfig": {"defaults": {"unit": "short"}},
-      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 27}
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource_site2}"
+      },
+      "targets": [
+        {
+          "expr": "sum(rate(container_cpu_usage_seconds_total{namespace=\"$ns_site2\", container!=\"\"}[5m])) by (pod)",
+          "legendFormat": "{{ pod }}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        }
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 27
+      }
     },
     {
       "id": 18,
       "type": "timeseries",
       "title": "Site 1 Memory Usage",
-      "datasource": {"type": "prometheus", "uid": "${datasource_site1}"},
-      "targets": [{
-        "expr": "sum(container_memory_working_set_bytes{namespace=\"$ns_site1\", container!=\"\"}) by (pod)",
-        "legendFormat": "{{ pod }}"
-      }],
-      "fieldConfig": {"defaults": {"unit": "bytes"}},
-      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 35}
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource_site1}"
+      },
+      "targets": [
+        {
+          "expr": "sum(container_memory_working_set_bytes{namespace=\"$ns_site1\", container!=\"\"}) by (pod)",
+          "legendFormat": "{{ pod }}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes"
+        }
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 35
+      }
     },
     {
       "id": 19,
       "type": "timeseries",
       "title": "Site 2 Memory Usage",
-      "datasource": {"type": "prometheus", "uid": "${datasource_site2}"},
-      "targets": [{
-        "expr": "sum(container_memory_working_set_bytes{namespace=\"$ns_site2\", container!=\"\"}) by (pod)",
-        "legendFormat": "{{ pod }}"
-      }],
-      "fieldConfig": {"defaults": {"unit": "bytes"}},
-      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 35}
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource_site2}"
+      },
+      "targets": [
+        {
+          "expr": "sum(container_memory_working_set_bytes{namespace=\"$ns_site2\", container!=\"\"}) by (pod)",
+          "legendFormat": "{{ pod }}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes"
+        }
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 35
+      }
+    },
+    {
+      "id": 20,
+      "type": "row",
+      "title": "AAP Gateway Status",
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 43
+      }
+    },
+    {
+      "id": 21,
+      "type": "stat",
+      "title": "Site 1 Gateway Health",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource_site1}"
+      },
+      "targets": [
+        {
+          "expr": "aap_gateway_overall_status",
+          "instant": true,
+          "legendFormat": ""
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "1": {
+                  "text": "ONLINE",
+                  "color": "green",
+                  "index": 0
+                },
+                "0": {
+                  "text": "OFFLINE",
+                  "color": "red",
+                  "index": 1
+                }
+              }
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          }
+        }
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "orientation": "auto",
+        "textMode": "auto",
+        "colorMode": "background"
+      },
+      "gridPos": {
+        "h": 3,
+        "w": 12,
+        "x": 0,
+        "y": 44
+      }
+    },
+    {
+      "id": 22,
+      "type": "stat",
+      "title": "Site 2 Gateway Health",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource_site2}"
+      },
+      "targets": [
+        {
+          "expr": "aap_gateway_overall_status",
+          "instant": true,
+          "legendFormat": ""
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "1": {
+                  "text": "ONLINE",
+                  "color": "green",
+                  "index": 0
+                },
+                "0": {
+                  "text": "OFFLINE",
+                  "color": "red",
+                  "index": 1
+                }
+              }
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          }
+        }
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "orientation": "auto",
+        "textMode": "auto",
+        "colorMode": "background"
+      },
+      "gridPos": {
+        "h": 3,
+        "w": 12,
+        "x": 12,
+        "y": 44
+      }
+    },
+    {
+      "id": 23,
+      "type": "stat",
+      "title": "Site 1 Service Status",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource_site1}"
+      },
+      "targets": [
+        {
+          "expr": "aap_gateway_service_status",
+          "instant": true,
+          "legendFormat": "{{service_name}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "1": {
+                  "text": "OK",
+                  "color": "green",
+                  "index": 0
+                },
+                "0": {
+                  "text": "DEGRADED",
+                  "color": "red",
+                  "index": 1
+                }
+              }
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          }
+        }
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "orientation": "auto",
+        "textMode": "auto",
+        "colorMode": "background"
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 12,
+        "x": 0,
+        "y": 47
+      }
+    },
+    {
+      "id": 24,
+      "type": "stat",
+      "title": "Site 2 Service Status",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource_site2}"
+      },
+      "targets": [
+        {
+          "expr": "aap_gateway_service_status",
+          "instant": true,
+          "legendFormat": "{{service_name}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "1": {
+                  "text": "OK",
+                  "color": "green",
+                  "index": 0
+                },
+                "0": {
+                  "text": "DEGRADED",
+                  "color": "red",
+                  "index": 1
+                }
+              }
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          }
+        }
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "orientation": "auto",
+        "textMode": "auto",
+        "colorMode": "background"
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 12,
+        "x": 12,
+        "y": 47
+      }
     }
   ]
 }

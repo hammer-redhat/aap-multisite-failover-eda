@@ -123,3 +123,14 @@ thanos_bearer_token_site_two: ""
 # Site labels — must match the SITE_LABEL env var used in the Deployment (and the site label in ServiceMonitor)
 site_label_one: "site1"
 site_label_two: "site2"
+
+# AAP Gateway API credentials (for service status metrics)
+# Find the gateway URL via: oc -n <namespace> get route <instance-name> -o jsonpath='{.spec.host}'
+# Leave gateway_url_site_* empty to skip gateway status metrics for that site.
+# gateway_password_site_* defaults to aap_admin_password if not set.
+gateway_url_site_one: ""   # e.g. https://aap-26-aap-26.apps.site1.example.com
+gateway_url_site_two: ""   # e.g. https://aap-26-aap-26.apps.site2.example.com
+gateway_user: "admin"
+# gateway_password_site_one: ""   # defaults to aap_admin_password
+# gateway_password_site_two: ""   # defaults to aap_admin_password
+gateway_ssl_verify: "false"       # set to "true" if the gateway uses a trusted certificate

@@ -32,6 +32,30 @@ spec:
                 secretKeyRef:
                   name: postgres-check-db
                   key: DB_CONFIG
+            - name: GATEWAY_URL
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-check-gateway
+                  key: GATEWAY_URL
+                  optional: true
+            - name: GATEWAY_USER
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-check-gateway
+                  key: GATEWAY_USER
+                  optional: true
+            - name: GATEWAY_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-check-gateway
+                  key: GATEWAY_PASSWORD
+                  optional: true
+            - name: GATEWAY_SSL_VERIFY
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-check-gateway
+                  key: GATEWAY_SSL_VERIFY
+                  optional: true
           ports:
             - name: metrics
               containerPort: 8080

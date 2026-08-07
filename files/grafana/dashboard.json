@@ -260,7 +260,7 @@
       "title": "Site 1 Last Check Timestamp",
       "datasource": {"type": "prometheus", "uid": "${datasource_site1}"},
       "targets": [{
-        "expr": "aap_pg_check_last_run_timestamp_seconds",
+        "expr": "aap_pg_check_last_run_timestamp_seconds * 1000",
         "instant": true,
         "legendFormat": ""
       }],
@@ -274,7 +274,7 @@
       "title": "Site 2 Last Check Timestamp",
       "datasource": {"type": "prometheus", "uid": "${datasource_site2}"},
       "targets": [{
-        "expr": "aap_pg_check_last_run_timestamp_seconds",
+        "expr": "aap_pg_check_last_run_timestamp_seconds * 1000",
         "instant": true,
         "legendFormat": ""
       }],

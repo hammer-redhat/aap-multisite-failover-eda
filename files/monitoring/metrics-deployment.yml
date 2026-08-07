@@ -32,16 +32,6 @@ spec:
                 secretKeyRef:
                   name: postgres-check-db
                   key: DB_CONFIG
-            - name: WEBHOOK_URL
-              valueFrom:
-                secretKeyRef:
-                  name: postgres-check-webhook
-                  key: WEBHOOK_URL
-            - name: AUTH_TOKEN
-              valueFrom:
-                secretKeyRef:
-                  name: postgres-check-webhook
-                  key: AUTH_TOKEN
           ports:
             - name: metrics
               containerPort: 8080
